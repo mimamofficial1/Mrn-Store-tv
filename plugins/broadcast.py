@@ -6,6 +6,7 @@ from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait,
 from plugins.dbusers import db
 from pyrogram import Client, filters
 from config import ADMINS
+from plugins.admins_db import dynamic_admin_filter
 import asyncio
 import datetime
 import time
@@ -41,7 +42,7 @@ async def broadcast_messages(user_id, message):
 # Ask Doubt on telegram @KingVJ01
 
 
-@Client.on_message(filters.command("broadcast") & filters.user(ADMINS) & filters.reply)
+@Client.on_message(filters.command("broadcast") & dynamic_admin_filter("can_broadcast") & filters.reply)
 async def verupikkals(bot, message):
     users = await db.get_all_users()
     b_msg = message.reply_to_message
@@ -92,3 +93,4 @@ async def verupikkals(bot, message):
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
+

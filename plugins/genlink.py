@@ -7,6 +7,8 @@ from pyrogram import filters, Client, enums
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
 from config import ADMINS, LOG_CHANNEL, PUBLIC_FILE_STORE, WEBSITE_URL, WEBSITE_URL_MODE
 from plugins.users_api import get_user, get_short_link
+from plugins.settings_db import get_settings
+from plugins.admins_db import is_admin
 import re
 import os
 import json
@@ -17,9 +19,13 @@ import base64
 # Ask Doubt on telegram @KingVJ01
 
 async def allowed(_, __, message):
-    if PUBLIC_FILE_STORE:
+    settings = await get_settings()
+    public_mode = settings.get("public_mode")
+    if public_mode is None:
+        public_mode = PUBLIC_FILE_STORE  # fall back to env default if never set
+    if public_mode:
         return True
-    if message.from_user and message.from_user.id in ADMINS:
+    if message.from_user and (message.from_user.id in ADMINS or await is_admin(message.from_user.id)):
         return True
     return False
 

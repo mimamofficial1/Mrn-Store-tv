@@ -2,11 +2,14 @@
 # Added for MRN Store TV bot
 
 import time
+import os
+import sys
 import psutil
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import ADMINS
 from plugins.dbusers import db
+from plugins.admins_db import dynamic_admin_filter
 
 BOT_START_TIME = time.time()
 
@@ -32,14 +35,15 @@ def _extract_target_id(message: Message):
     return None
 
 
-@Client.on_message(filters.command("ban") & filters.user(ADMINS))
+@Client.on_message(filters.command("ban") & dynamic_admin_filter())
 async def ban_user_cmd(client, message: Message):
     target_id = _extract_target_id(message)
     if target_id is None:
         return await message.reply_text(
             "<b>Usage:</b> <code>/ban user_id</code>\nOr reply to that user's message with /ban"
         )
-    if target_id in ADMINS:
+    from plugins.admins_db import is_admin
+    if target_id in ADMINS or await is_admin(target_id):
         return await message.reply_text("<b>❌ You can't ban an admin.</b>")
     if not await db.is_user_exist(target_id):
         return await message.reply_text("<b>This user has never used the bot.</b>")
@@ -47,7 +51,7 @@ async def ban_user_cmd(client, message: Message):
     await message.reply_text(f"<b>✅ User <code>{target_id}</code> has been banned from the bot.</b>")
 
 
-@Client.on_message(filters.command("unban") & filters.user(ADMINS))
+@Client.on_message(filters.command("unban") & dynamic_admin_filter())
 async def unban_user_cmd(client, message: Message):
     target_id = _extract_target_id(message)
     if target_id is None:
@@ -60,7 +64,7 @@ async def unban_user_cmd(client, message: Message):
     await message.reply_text(f"<b>✅ User <code>{target_id}</code> has been unbanned.</b>")
 
 
-@Client.on_message(filters.command(["status", "stats"]) & filters.user(ADMINS))
+@Client.on_message(filters.command(["status", "stats"]) & dynamic_admin_filter())
 async def bot_status(client, message: Message):
     total_users = await db.total_users_count()
     total_banned = await db.total_banned_count()
@@ -79,3 +83,19 @@ async def bot_status(client, message: Message):
         f"⚡ Uptime - <code>{uptime}</code>"
     )
     await message.reply_text(text)
+
+
+async def do_restart(chat_id_notify=None, client=None):
+    """Restarts the bot process in place (works on Railway/Koyeb/Render)."""
+    if client and chat_id_notify:
+        try:
+            await client.send_message(chat_id_notify, "<b>✅ Bot restarted successfully!</b>")
+        except Exception:
+            pass
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
+
+@Client.on_message(filters.command("restart") & dynamic_admin_filter())
+async def restart_bot_cmd(client, message: Message):
+    await message.reply_text("<b>♻️ Restarting bot, please wait...</b>")
+    os.execv(sys.executable, [sys.executable] + sys.argv)

@@ -190,6 +190,8 @@ async def start(client, message):
                     InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx'),
                     InlineKeyboardButton('ᴍᴏᴠɪᴇs sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
                 ]]
+                for row in (settings.get("custom_buttons") or []):
+                    button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
                 reply_markup = InlineKeyboardMarkup(button)
                 protect = settings.get("protect_content", False)
                 try:
@@ -266,6 +268,8 @@ async def start(client, message):
                 InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx'),
                 InlineKeyboardButton('ᴍᴏᴠɪᴇs sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
             ]]
+            for row in (settings.get("custom_buttons") or []):
+                button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
             reply_markup = InlineKeyboardMarkup(button)
             del_msg = await msg.copy(chat_id=message.from_user.id, caption=f_caption, reply_markup=reply_markup, protect_content=settings.get("protect_content", False))
         else:

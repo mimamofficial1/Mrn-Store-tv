@@ -3,34 +3,50 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from config import ADMINS, CUSTOM_FILE_CAPTION
+from config import ADMINS, CUSTOM_FILE_CAPTION, PUBLIC_FILE_STORE
 from Script import script
-from plugins.settings_db import get_settings, update_setting, add_force_sub_channel, remove_force_sub_channel
+from plugins.settings_db import (
+    get_settings, update_setting, add_force_sub_channel, remove_force_sub_channel,
+    touch_last_used, readable_ago, add_custom_button, remove_custom_button, clear_custom_buttons
+)
+from plugins.admins_db import dynamic_admin_filter, is_admin, get_all_admins, add_admin, remove_admin, set_permission, PERMISSIONS
+
+
+def main_menu_text(settings):
+    last_used = readable_ago(settings.get("last_used"))
+    return (
+        "🍿 <b>You can customise more features in your MRN bot from here.</b>\n\n"
+        f"⏰ <b>Last Used</b> - {last_used} ago"
+    )
 
 
 def main_menu_markup():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📝 Start Message", callback_data="adm_start")],
-        [InlineKeyboardButton("📢 Force Subscribe", callback_data="adm_fsub")],
-        [InlineKeyboardButton("🔒 Protect Content", callback_data="adm_protect")],
+        [InlineKeyboardButton("🔘 Custom Button", callback_data="adm_button")],
         [InlineKeyboardButton("♻️ Auto Delete", callback_data="adm_autodel")],
-        [InlineKeyboardButton("🎬 Custom Caption", callback_data="adm_caption")],
+        [InlineKeyboardButton("👥 Admins", callback_data="adm_admins")],
         [InlineKeyboardButton("📊 Bot Status", callback_data="adm_status")],
+        [InlineKeyboardButton("🛍 Bot Mode", callback_data="adm_mode")],
+        [InlineKeyboardButton("⏱ Restart Bot", callback_data="adm_restart")],
+        [InlineKeyboardButton("🔒 Protect Content", callback_data="adm_protect")],
+        [InlineKeyboardButton("🍿 Custom Caption", callback_data="adm_caption")],
+        [InlineKeyboardButton("📢 Custom Force Subscribe", callback_data="adm_fsub")],
         [InlineKeyboardButton("✖ Close", callback_data="adm_close")],
     ])
 
 
-@Client.on_message(filters.command(["settings", "customize"]) & filters.user(ADMINS))
+@Client.on_message(filters.command(["settings", "customize"]) & dynamic_admin_filter("can_settings"))
 async def settings_cmd(client, message: Message):
-    await message.reply_text(
-        "<b>⚙️ BOT SETTINGS</b>\n\nChoose what you want to configure:",
-        reply_markup=main_menu_markup()
-    )
+    settings = await get_settings()
+    await touch_last_used()
+    await message.reply_text(main_menu_text(settings), reply_markup=main_menu_markup())
 
 
 @Client.on_callback_query(filters.regex(r"^adm_"))
 async def settings_cb(client: Client, query: CallbackQuery):
-    if query.from_user.id not in ADMINS:
+    user = query.from_user
+    if not (user.id in ADMINS or await is_admin(user.id)):
         return await query.answer("Admins only!", show_alert=True)
 
     data = query.data
@@ -38,8 +54,9 @@ async def settings_cb(client: Client, query: CallbackQuery):
 
     # ---------------- Main menu ----------------
     if data == "adm_menu":
+        await touch_last_used()
         await query.message.edit_text(
-            "<b>⚙️ BOT SETTINGS</b>\n\nChoose what you want to configure:",
+            main_menu_text(settings),
             reply_markup=main_menu_markup()
         )
 
@@ -69,6 +86,121 @@ async def settings_cb(client: Client, query: CallbackQuery):
         await query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("« Back", callback_data="adm_menu")]]
         ))
+
+    # ---------------- Bot Mode ----------------
+    elif data == "adm_mode":
+        await render_mode_menu(query, settings)
+
+    elif data in ("adm_mode_public", "adm_mode_private"):
+        await update_setting("public_mode", data == "adm_mode_public")
+        settings["public_mode"] = data == "adm_mode_public"
+        await render_mode_menu(query, settings)
+
+    # ---------------- Restart Bot ----------------
+    elif data == "adm_restart":
+        await query.message.edit_text("<b>♻️ Restarting bot, please wait...</b>")
+        import os, sys
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    # ---------------- Admins ----------------
+    elif data == "adm_admins":
+        await render_admins_menu(query)
+
+    elif data == "adm_admins_add":
+        await query.message.reply_text(
+            "<b>Send the user ID to make admin, or forward a message from them.</b>\n/cancel to cancel."
+        )
+        ans = await client.ask(query.message.chat.id, "")
+        if ans.text and ans.text.strip() == "/cancel":
+            await ans.reply_text("Cancelled.")
+        else:
+            target_id = None
+            if ans.forward_from:
+                target_id = ans.forward_from.id
+            elif ans.text:
+                try:
+                    target_id = int(ans.text.strip())
+                except ValueError:
+                    pass
+            if not target_id:
+                await ans.reply_text("<b>❌ Invalid input.</b>")
+            elif target_id in ADMINS:
+                await ans.reply_text("<b>This user is already an owner-level admin.</b>")
+            else:
+                await add_admin(target_id)
+                await ans.reply_text(f"<b>✅ <code>{target_id}</code> added as admin.</b>")
+        await render_admins_menu(query, edit=False)
+
+    elif data == "adm_admins_list":
+        admins = await get_all_admins()
+        if not admins:
+            return await query.answer("No admins added yet (besides the owner).", show_alert=True)
+        buttons = []
+        for adm in admins:
+            buttons.append([InlineKeyboardButton(f"👤 {adm['_id']}", callback_data=f"adm_admin_view_{adm['_id']}")])
+        buttons.append([InlineKeyboardButton("« Back", callback_data="adm_admins")])
+        await query.message.edit_text("<b>Tap an admin to manage:</b>", reply_markup=InlineKeyboardMarkup(buttons))
+
+    elif data.startswith("adm_admin_view_"):
+        target_id = int(data.replace("adm_admin_view_", "", 1))
+        await render_admin_detail(query, target_id)
+
+    elif data.startswith("adm_admin_toggle_"):
+        # data format: adm_admin_toggle_<perm>_<id>
+        parts = data.split("_")
+        target_id = int(parts[-1])
+        perm = "_".join(parts[3:-1])
+        from plugins.admins_db import get_admin
+        adm = await get_admin(target_id)
+        current = bool(adm.get(perm, False)) if adm else False
+        await set_permission(target_id, perm, not current)
+        await render_admin_detail(query, target_id)
+
+    elif data.startswith("adm_admin_remove_"):
+        target_id = int(data.replace("adm_admin_remove_", "", 1))
+        await remove_admin(target_id)
+        await query.answer("Admin removed.", show_alert=True)
+        await render_admins_menu(query)
+
+    # ---------------- Custom Button ----------------
+    elif data == "adm_button":
+        await render_button_menu(query, settings)
+
+    elif data == "adm_button_add":
+        await query.message.reply_text("<b>Send the button text.</b>\n/cancel to cancel.")
+        ans1 = await client.ask(query.message.chat.id, "")
+        if ans1.text and ans1.text.strip() != "/cancel":
+            btn_text = ans1.text.strip()
+            await ans1.reply_text("<b>Now send the button URL.</b>\n/cancel to cancel.")
+            ans2 = await client.ask(query.message.chat.id, "")
+            if ans2.text and ans2.text.strip() != "/cancel" and ans2.text.strip().startswith(("http://", "https://")):
+                await add_custom_button(btn_text, ans2.text.strip())
+                await ans2.reply_text("<b>✅ Button added.</b>")
+            elif ans2.text:
+                await ans2.reply_text("<b>❌ That doesn't look like a valid URL (must start with http:// or https://).</b>")
+        settings = await get_settings()
+        await render_button_menu(query, settings, edit=False)
+
+    elif data == "adm_button_remove":
+        settings = await get_settings()
+        flat = [b for row in (settings.get("custom_buttons") or []) for b in row]
+        if not flat:
+            return await query.answer("No custom buttons yet.", show_alert=True)
+        buttons = [[InlineKeyboardButton(f"❌ {b['text']}", callback_data=f"adm_button_rm_{i}")] for i, b in enumerate(flat)]
+        buttons.append([InlineKeyboardButton("« Back", callback_data="adm_button")])
+        await query.message.edit_text("<b>Tap a button to remove it:</b>", reply_markup=InlineKeyboardMarkup(buttons))
+
+    elif data.startswith("adm_button_rm_"):
+        index = int(data.replace("adm_button_rm_", "", 1))
+        await remove_custom_button(index)
+        settings = await get_settings()
+        await render_button_menu(query, settings)
+
+    elif data == "adm_button_clear":
+        await clear_custom_buttons()
+        await query.answer("All custom buttons cleared.", show_alert=True)
+        settings = await get_settings()
+        await render_button_menu(query, settings)
 
     # ---------------- Force Subscribe ----------------
     elif data == "adm_fsub":
@@ -298,6 +430,83 @@ async def render_start_menu(query, settings, edit=True):
     buttons = [
         [InlineKeyboardButton("✏️ Edit Start Text", callback_data="adm_start_edit")],
         [InlineKeyboardButton("🗑 Reset to Default", callback_data="adm_start_reset")],
+        [InlineKeyboardButton("« Back", callback_data="adm_menu")],
+    ]
+    markup = InlineKeyboardMarkup(buttons)
+    if edit:
+        await query.message.edit_text(text, reply_markup=markup)
+    else:
+        await query.message.reply_text(text, reply_markup=markup)
+
+
+async def render_mode_menu(query, settings, edit=True):
+    public_mode = settings.get("public_mode")
+    if public_mode is None:
+        public_mode = PUBLIC_FILE_STORE
+    state = "🛍 Public Mode" if public_mode else "🔒 Private Mode"
+    text = (
+        "<b>🛍 BOT MODE</b>\n\n"
+        "- <b>Public Mode:</b> any user can generate share links by sending files.\n"
+        "- <b>Private Mode:</b> only admins can generate share links.\n\n"
+        f"<b>Current Mode:</b> {state}"
+    )
+    buttons = [
+        [InlineKeyboardButton("🛍 Public", callback_data="adm_mode_public"),
+         InlineKeyboardButton("🔒 Private", callback_data="adm_mode_private")],
+        [InlineKeyboardButton("« Back", callback_data="adm_menu")],
+    ]
+    markup = InlineKeyboardMarkup(buttons)
+    if edit:
+        await query.message.edit_text(text, reply_markup=markup)
+    else:
+        await query.message.reply_text(text, reply_markup=markup)
+
+
+async def render_admins_menu(query, edit=True):
+    admins = await get_all_admins()
+    text = (
+        "<b>👥 ADMINS</b>\n\n"
+        "Add extra admins and control what each one can do.\n"
+        f"<b>Extra admins added:</b> {len(admins)}"
+    )
+    buttons = [
+        [InlineKeyboardButton("➕ Add Admin", callback_data="adm_admins_add")],
+        [InlineKeyboardButton("📋 Manage Admins", callback_data="adm_admins_list")],
+        [InlineKeyboardButton("« Back", callback_data="adm_menu")],
+    ]
+    markup = InlineKeyboardMarkup(buttons)
+    if edit:
+        await query.message.edit_text(text, reply_markup=markup)
+    else:
+        await query.message.reply_text(text, reply_markup=markup)
+
+
+async def render_admin_detail(query, target_id):
+    from plugins.admins_db import get_admin
+    adm = await get_admin(target_id) or {}
+    text = f"<b>👤 Admin: <code>{target_id}</code></b>\n\nTap a permission to toggle it:"
+    buttons = []
+    for perm, label in PERMISSIONS.items():
+        state = "✅" if adm.get(perm) else "❌"
+        buttons.append([InlineKeyboardButton(f"{state} {label}", callback_data=f"adm_admin_toggle_{perm}_{target_id}")])
+    buttons.append([InlineKeyboardButton("🗑 Remove Admin", callback_data=f"adm_admin_remove_{target_id}")])
+    buttons.append([InlineKeyboardButton("« Back", callback_data="adm_admins_list")])
+    await query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(buttons))
+
+
+async def render_button_menu(query, settings, edit=True):
+    rows = settings.get("custom_buttons") or []
+    count = sum(len(r) for r in rows)
+    text = (
+        "<b>🔘 CUSTOM BUTTON</b>\n\n"
+        "Add custom URL buttons that get attached to every file the bot delivers.\n"
+        "Up to 2 buttons per row, multiple rows supported.\n\n"
+        f"<b>Buttons added:</b> {count}"
+    )
+    buttons = [
+        [InlineKeyboardButton("➕ Add Button", callback_data="adm_button_add"),
+         InlineKeyboardButton("➖ Remove Button", callback_data="adm_button_remove")],
+        [InlineKeyboardButton("🗑 Clear All", callback_data="adm_button_clear")],
         [InlineKeyboardButton("« Back", callback_data="adm_menu")],
     ]
     markup = InlineKeyboardMarkup(buttons)

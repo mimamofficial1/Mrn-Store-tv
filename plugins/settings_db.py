@@ -18,6 +18,9 @@ DEFAULTS = {
     "auto_delete_time": 1800,          # seconds
     "custom_caption": None,            # None -> fall back to config.CUSTOM_FILE_CAPTION
     "start_message": None,             # None -> fall back to Script.script.START_TXT
+    "custom_buttons": [],              # list of rows -> [[{"text":..,"url":..}, ...], ...]
+    "public_mode": None,               # None -> fall back to config.PUBLIC_FILE_STORE; True/False overrides it
+    "last_used": None,                 # unix timestamp, updated whenever /settings is opened
 }
 
 
@@ -41,9 +44,56 @@ async def update_setting(key, value):
     await _col.update_one({"_id": "settings"}, {"$set": {key: value}}, upsert=True)
 
 
+async def touch_last_used():
+    import time
+    await update_setting("last_used", time.time())
+
+
+def readable_ago(timestamp):
+    import time
+    if not timestamp:
+        return "Never"
+    seconds = int(time.time() - timestamp)
+    if seconds < 60:
+        return f"{seconds} Seconds"
+    minutes, secs = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes} Minutes {secs} Seconds"
+    hours, minutes = divmod(minutes, 60)
+    if hours < 24:
+        return f"{hours} Hours {minutes} Minutes"
+    days, hours = divmod(hours, 24)
+    return f"{days} Days {hours} Hours"
+
+
 async def add_force_sub_channel(channel):
     await _col.update_one({"_id": "settings"}, {"$addToSet": {"force_sub_channels": channel}}, upsert=True)
 
 
 async def remove_force_sub_channel(channel):
     await _col.update_one({"_id": "settings"}, {"$pull": {"force_sub_channels": channel}})
+
+
+async def add_custom_button(text, url):
+    settings = await get_settings()
+    rows = settings.get("custom_buttons") or []
+    # up to 2 buttons per row, like the reference UI
+    if rows and len(rows[-1]) < 2:
+        rows[-1].append({"text": text, "url": url})
+    else:
+        rows.append([{"text": text, "url": url}])
+    await update_setting("custom_buttons", rows)
+
+
+async def remove_custom_button(index):
+    settings = await get_settings()
+    flat = [btn for row in (settings.get("custom_buttons") or []) for btn in row]
+    if 0 <= index < len(flat):
+        flat.pop(index)
+    # re-pack into rows of 2
+    rows = [flat[i:i + 2] for i in range(0, len(flat), 2)]
+    await update_setting("custom_buttons", rows)
+
+
+async def clear_custom_buttons():
+    await update_setting("custom_buttons", [])
