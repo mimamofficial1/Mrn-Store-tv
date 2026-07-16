@@ -5,7 +5,7 @@
   MRN FILE STORE BOT
 </h1>
 
-![Typing SVG](https://readme-typing-svg.herokuapp.com/?lines=Welcome+To+MRN-FILE-STORE-BOT;A+Highly+Advance+File+Store+Bot;Made+By+Yt-@Tech_VJ!;With+Clone+Feature+Stream/Download+Link;Custom+Url+Shortner+Auto+Delete+Feature;A+Bot+With+Fully+Advanced+Feature!;Thank+You!)
+![Typing SVG](https://readme-typing-svg.herokuapp.com/?lines=Welcome+To+MRN-FILE-STORE-BOT;A+Highly+Advance+File+Store+Bot;Made+By+Yt-@Mrn_Officialx!;Custom+Url+Shortner+Auto+Delete+Feature;A+Bot+With+Fully+Advanced+Feature!;Thank+You!)
 </p>
 
 ## Features
@@ -31,8 +31,8 @@
 - `API_HASH` : Get From [my.telegram.org](https://my.telegram.org)
 - `BOT_TOKEN` : Get From [BotFather](https://telegram.me/BotFather)
 - `BOT_USERNAME` : Your Bot Username Without @
-- `DB_URI` : Mongodb Database Url For Main Bot [Tutorial Watch Here](https://youtu.be/DAHRmFdw99o)
-- `CLONE_DB_URI` : Mongodb Database Url For Clone Bot [Tutorial Watch Here](https://youtu.be/DAHRmFdw99o)
+- `DB_URI` : Mongodb Database Url For Main Bot 
+- `CLONE_DB_URI` : Mongodb Database Url For Clone Bot 
 - `ADMINS` : It mean Admin/Owner Id For Broadcasting Message.
 - `LOG_CHANNEL` : Log channel id start with -100xxxxxx
 - `URL` : Your Server App Link With https:// and in last make sure one / is given.
@@ -43,16 +43,6 @@
 </b>
 </details>
 
-## See How Bot Look Like
-
-<b><details><summary>Tap On Me For Demo Bot</summary></b>
-
-<img src="https://graph.org/file/bb9c59043c52072e8dc93.jpg" alt="Bot Demo">
-<img src="https://graph.org/file/295e41dfab93acf42a111.jpg" alt="Bot Demo">
-<img src="https://graph.org/file/ccc1b6ab4967a7d155ab8.jpg" alt="Bot Demo">
-<img src="https://graph.org/file/75db5257c39436b734b49.jpg" alt="Bot Demo">
-<img src="https://graph.org/file/1ce62a17012ed5723aaca.jpg" alt="Bot Demo">
-</details>
 
 ## Command To Use Bot
 
