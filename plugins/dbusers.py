@@ -32,5 +32,21 @@ class Database:
     async def delete_user(self, user_id):
         await self.col.delete_many({'id': int(user_id)})
 
+    async def ban_user(self, user_id):
+        await self.col.update_one({'id': int(user_id)}, {'$set': {'banned': True}})
+
+    async def unban_user(self, user_id):
+        await self.col.update_one({'id': int(user_id)}, {'$set': {'banned': False}})
+
+    async def is_user_banned(self, user_id):
+        user = await self.col.find_one({'id': int(user_id)})
+        if user:
+            return user.get('banned', False)
+        return False
+
+    async def total_banned_count(self):
+        count = await self.col.count_documents({'banned': True})
+        return count
+
 
 db = Database(DB_URI, DB_NAME)
