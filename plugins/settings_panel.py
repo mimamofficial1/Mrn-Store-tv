@@ -45,6 +45,16 @@ async def settings_cmd(client, message: Message):
 
 @Client.on_callback_query(filters.regex(r"^adm_"))
 async def settings_cb(client: Client, query: CallbackQuery):
+    try:
+        await _settings_cb_inner(client, query)
+    finally:
+        try:
+            await query.answer()
+        except Exception:
+            pass
+
+
+async def _settings_cb_inner(client: Client, query: CallbackQuery):
     user = query.from_user
     if not (user.id in ADMINS or await is_admin(user.id)):
         return await query.answer("Admins only!", show_alert=True)
