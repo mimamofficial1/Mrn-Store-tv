@@ -28,7 +28,10 @@ async def broadcast_messages(user_id, message):
         await db.delete_user(int(user_id))
         return False, "Blocked"
     except PeerIdInvalid:
-        await db.delete_user(int(user_id))
+        # NOTE: PeerIdInvalid does NOT mean the user blocked/deleted the bot.
+        # It usually means the bot's local peer cache doesn't have this user yet
+        # (common after a redeploy on Railway/Koyeb/Render). Deleting the user
+        # here was wrongly shrinking the user count after every broadcast.
         return False, "Error"
     except Exception as e:
         return False, "Error"
@@ -89,4 +92,3 @@ async def verupikkals(bot, message):
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
-
