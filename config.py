@@ -27,13 +27,6 @@ ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ
 BOT_USERNAME = environ.get("BOT_USERNAME", "MZStorFXrobot") # without @
 PORT = environ.get("PORT", "8080")
 
-# Clone Info :-
-CLONE_MODE = bool(environ.get('CLONE_MODE', False)) # Set True or False
-
-# If Clone Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
-CLONE_DB_URI = environ.get("CLONE_DB_URI", "mongodb+srv://Mrn_Officialx_imam_1503:Mrn_Officialx_imam_1503@cluster0.zfthfel.mongodb.net/?appName=Cluster0")
-CDB_NAME = environ.get("CDB_NAME", "Mrn_Officialx_imam_1503")
-
 # Database Information
 DB_URI = environ.get("DB_URI", "mongodb+srv://Mrn_Officialx_imam_1503:Mrn_Officialx_imam_1503@cluster0.zfthfel.mongodb.net/?appName=Cluster0")
 DB_NAME = environ.get("DB_NAME", "Mrn_Officialx_imam_1503")
@@ -69,10 +62,6 @@ WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', True)) # Set True or Fal
 # If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
 WEBSITE_URL = environ.get("WEBSITE_URL", "https://mrn-universe-store-tv.blogspot.com/2026/07/redirecting-to-your-link-document.html") # For More Information Check Video On Yt - @Tech_VJ
 
-# File Stream Config
-STREAM_MODE = bool(environ.get('STREAM_MODE', True)) # Set True or False
-
-# If Stream Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
 MULTI_CLIENT = False
 SLEEP_THRESHOLD = int(environ.get('SLEEP_THRESHOLD', '60'))
 PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 minutes
@@ -85,4 +74,3 @@ URL = environ.get("URL", "https://mrn-auto-filter-bot-d5869d42.koyeb.app/")
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
-    
