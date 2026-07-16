@@ -6,8 +6,11 @@
 
 import requests
 import json
-from motor.motor_asyncio import AsyncIOMotorClient
-from plugins.clone import mongo_db
+from pymongo import MongoClient
+from config import DB_URI
+
+mongo_client = MongoClient(DB_URI)
+mongo_db = mongo_client["cloned_vjbotz"]
 
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
@@ -19,8 +22,9 @@ async def get_short_link(user, link):
     print(user)
     response = requests.get(f"https://{base_site}/api?api={api_key}&url={link}")
     data = response.json()
-    if data["status"] == "success" or rget.status_code == 200:
-        return data["shortenedUrl"]
+    if data.get("status") == "success" or response.status_code == 200:
+        return data.get("shortenedUrl")
+    return link
 
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
