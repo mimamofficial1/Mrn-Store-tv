@@ -87,7 +87,7 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
             cpu = ram = 0
         uptime = get_readable_time(int(time.time() - BOT_START_TIME))
         text = (
-            "<b>🤖 BOT STATUS</b>\n\n"
+            "<b>🤖 BOT STATUS\n\n"
             f"👤 Users - <code>{total_users}</code>\n"
             f"🚫 Ban Users - <code>{total_banned}</code>\n"
             f"⚙️ CPU - <code>{cpu}%</code>\n"
