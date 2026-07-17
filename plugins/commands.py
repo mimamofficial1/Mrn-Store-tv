@@ -81,9 +81,9 @@ async def start(client, message):
             InlineKeyboardButton('💁‍♀️ ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('😊 ᴀʙᴏᴜᴛ', callback_data='about')
             ],[
-            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
+            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ ⚜️', url='https://t.me/Mrn_Officialx')
             ],[
-            InlineKeyboardButton('♻️ ᴍᴏᴠɪᴇs ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
+            InlineKeyboardButton('♻️ ᴀʟʟ ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
             InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
@@ -385,9 +385,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InlineKeyboardButton('💁‍♀️ ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('😊 ᴀʙᴏᴜᴛ', callback_data='about')
             ],[
-            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
+            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ ⚜️', url='https://t.me/Mrn_Officialx')
             ],[
-            InlineKeyboardButton('♻️ ᴍᴏᴠɪᴇs ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
+            InlineKeyboardButton('♻️ ᴀʟʟ ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
             InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
