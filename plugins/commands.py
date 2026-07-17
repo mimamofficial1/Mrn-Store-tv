@@ -82,14 +82,15 @@ async def _forward_single_to_log(client, msg):
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     username = client.me.username
-    if not await db.is_user_exist(message.from_user.id):
+    user_doc = await db.get_user(message.from_user.id)
+    if not user_doc:
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(LOG_CHANNEL, script.LOG_TEXT.format(message.from_user.id, message.from_user.mention))
-    if await db.is_user_banned(message.from_user.id):
+    elif user_doc.get('banned', False):
         return await message.reply_text("<b>🚫 You are banned from using this bot.</b>")
 
     settings = await get_settings()
-    missing_channels = await not_joined_channels(client, message.from_user.id)
+    missing_channels = await not_joined_channels(client, message.from_user.id, settings)
     if missing_channels:
         buttons = await force_sub_join_buttons(client, missing_channels)
         if len(message.command) == 2:
@@ -97,8 +98,19 @@ async def start(client, message):
         else:
             retry_url = f"https://t.me/{username}?start=true"
         buttons.append([InlineKeyboardButton("🔄 Try Again", url=retry_url)])
+        fsub_text = settings.get("force_sub_message") or "<b>Please join our channel(s) to use this bot.</b>"
+        fsub_photo = settings.get("force_sub_photo")
+        if fsub_photo:
+            try:
+                return await message.reply_photo(
+                    fsub_photo,
+                    caption=fsub_text,
+                    reply_markup=InlineKeyboardMarkup(buttons),
+                )
+            except Exception:
+                pass  # bad/expired file_id -> fall back to text-only below
         return await message.reply_text(
-            settings.get("force_sub_message") or "<b>Please join our channel(s) to use this bot.</b>",
+            fsub_text,
             reply_markup=InlineKeyboardMarkup(buttons),
             disable_web_page_preview=True
         )

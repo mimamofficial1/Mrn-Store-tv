@@ -87,12 +87,12 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
             cpu = ram = 0
         uptime = get_readable_time(int(time.time() - BOT_START_TIME))
         text = (
-            "<b>🤖 BOT STATUS\n\n"
+            "<b>🤖 BOT STATUS</b>\n\n"
             f"👤 Users - <code>{total_users}</code>\n"
             f"🚫 Ban Users - <code>{total_banned}</code>\n"
             f"⚙️ CPU - <code>{cpu}%</code>\n"
             f"💾 RAM - <code>{ram}%</code>\n"
-            f"⚡ Uptime - <code>{uptime}</code></b>"
+            f"⚡ Uptime - <code>{uptime}</code>"
         )
         await query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("« Back", callback_data="adm_menu")]]
@@ -327,6 +327,24 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
         settings = await get_settings()
         await render_fsub_menu(query, settings, edit=False)
 
+    elif data == "adm_fsub_pic":
+        await query.message.reply_text("<b>Send a photo to show with the Force Subscribe message.</b>\n/cancel to cancel.")
+        ans = await client.ask(query.message.chat.id, "")
+        if ans.photo:
+            await update_setting("force_sub_photo", ans.photo.file_id)
+            await ans.reply_text("<b>✅ Force Subscribe photo updated.</b>")
+        elif ans.text and ans.text.strip() == "/cancel":
+            await ans.reply_text("Cancelled.")
+        else:
+            await ans.reply_text("<b>⚠️ That wasn't a photo, nothing changed.</b>")
+        settings = await get_settings()
+        await render_fsub_menu(query, settings, edit=False)
+
+    elif data == "adm_fsub_pic_rm":
+        await update_setting("force_sub_photo", None)
+        settings = await get_settings()
+        await render_fsub_menu(query, settings)
+
     # ---------------- Protect Content ----------------
     elif data == "adm_protect":
         await render_protect_menu(query, settings)
@@ -412,17 +430,21 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
 async def render_fsub_menu(query, settings, edit=True):
     state = "✅ ON" if settings.get("force_sub") else "❌ OFF"
     channels = settings.get("force_sub_channels") or []
+    pic_state = "✅ Set" if settings.get("force_sub_photo") else "❌ Not set"
     text = (
         "<b>📢 FORCE SUBSCRIBE</b>\n\n"
         "Users must join the added channel(s) before using the bot.\n\n"
         f"<b>Status:</b> {state}\n"
-        f"<b>Channels added:</b> {len(channels)}"
+        f"<b>Channels added:</b> {len(channels)}\n"
+        f"<b>Force Pic:</b> {pic_state}"
     )
     buttons = [
         [InlineKeyboardButton("➕ Add Channel", callback_data="adm_fsub_add"),
          InlineKeyboardButton("➖ Remove Channel", callback_data="adm_fsub_remove")],
         [InlineKeyboardButton("Toggle ON/OFF", callback_data="adm_fsub_toggle")],
         [InlineKeyboardButton("✏️ Edit Message", callback_data="adm_fsub_msg")],
+        [InlineKeyboardButton("🖼 Set Force Pic", callback_data="adm_fsub_pic"),
+         InlineKeyboardButton("🗑 Remove Pic", callback_data="adm_fsub_pic_rm")],
         [InlineKeyboardButton("« Back", callback_data="adm_menu")],
     ]
     markup = InlineKeyboardMarkup(buttons)

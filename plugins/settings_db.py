@@ -14,6 +14,7 @@ DEFAULTS = {
     "force_sub": False,
     "force_sub_channels": [],          # list of channel ids or @usernames
     "force_sub_message": "<b>👋 Please join our channel(s) below to use this bot, then tap 🔄 Try Again.</b>",
+    "force_sub_photo": None,           # file_id of a photo to show with the force-sub prompt (None = text only)
     "protect_content": False,
     "auto_delete": True,
     "auto_delete_time": 1800,          # seconds
@@ -153,3 +154,9 @@ async def record_join_request(user_id, channel_id):
 async def has_join_request(user_id, channel_id):
     doc = await _join_requests_col.find_one({"user_id": int(user_id), "channel_id": int(channel_id)})
     return doc is not None
+
+
+async def clear_join_request(user_id, channel_id):
+    """Wipe the recorded join request when a user leaves/is kicked from the
+    channel, so they're required to request again next time."""
+    await _join_requests_col.delete_one({"user_id": int(user_id), "channel_id": int(channel_id)})

@@ -22,6 +22,11 @@ class Database:
         user = await self.col.find_one({'id':int(id)})
         return bool(user)
 
+    async def get_user(self, id):
+        """Single query combining what is_user_exist + is_user_banned used
+        to do as two separate round trips."""
+        return await self.col.find_one({'id': int(id)})
+
     async def total_users_count(self):
         count = await self.col.count_documents({})
         return count
