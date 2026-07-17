@@ -78,13 +78,13 @@ async def start(client, message):
 
     if len(message.command) != 2:
         buttons = [[
+            InlineKeyboardButton('💁‍♀️ ʜᴇʟᴘ', callback_data='help'),
+            InlineKeyboardButton('😊 ᴀʙᴏᴜᴛ', callback_data='about')
+            ],[
             InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
             ],[
             InlineKeyboardButton('👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴜs', url='https://t.me/MRN_CONTACT_BOT'),
             InlineKeyboardButton('💝 ᴍᴏᴠɪᴇ sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
-            ],[
-            InlineKeyboardButton('💁‍♀️ ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('😊 ᴀʙᴏᴜᴛ', callback_data='about')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         me = client.me
@@ -382,13 +382,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
     
     elif query.data == "start":
         buttons = [[
-            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
-        ],[
-            InlineKeyboardButton('👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴜs', url='https://t.me/MRN_CONTACT_BOT'),
-            InlineKeyboardButton('💝 ᴍᴏᴠɪᴇ sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
-        ],[
             InlineKeyboardButton('💁‍♀️ ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('😊 ᴀʙᴏᴜᴛ', callback_data='about')
+            ],[
+            InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
+            ],[
+            InlineKeyboardButton('👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴜs', url='https://t.me/MRN_CONTACT_BOT'),
+            InlineKeyboardButton('💝 ᴍᴏᴠɪᴇ sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await client.edit_message_media(
