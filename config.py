@@ -1,6 +1,3 @@
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 
 import re
@@ -60,10 +57,8 @@ VERIFY_TUTORIAL = environ.get("VERIFY_TUTORIAL", "https://t.me/MRN_Tutorial/1806
 WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', True)) # Set True or False
 
 # If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
-WEBSITE_URL = environ.get("WEBSITE_URL", "https://mrn-universe-store-tv.blogspot.com/2026/07/redirecting-to-your-link-document.html") # For More Information Check Video On Yt - @Tech_VJ
+WEBSITE_URL = environ.get("WEBSITE_URL", "https://mrn-universe-store-tv.blogspot.com/2026/07/redirecting-to-your-link-document.html")
 
-MULTI_CLIENT = False
-SLEEP_THRESHOLD = int(environ.get('SLEEP_THRESHOLD', '60'))
 PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 minutes
 if 'DYNO' in environ:
     ON_HEROKU = True
@@ -71,6 +66,3 @@ else:
     ON_HEROKU = False
 URL = environ.get("URL", "https://mrn-auto-filter-bot-d5869d42.koyeb.app/")
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01

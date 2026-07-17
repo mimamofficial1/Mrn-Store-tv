@@ -1,6 +1,3 @@
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 
 class script(object):
@@ -15,18 +12,12 @@ class script(object):
 ✅ ᴀɴʏ ʀᴇǫᴜᴇꜱᴛ / ǫᴜᴇʀʏ / ꜰᴇᴇᴅʙᴀᴄᴋ / ᴘᴀɪᴅ / ᴅᴇᴍᴏ
 🧑‍🔧 ᴄᴏɴᴛᴀᴄᴛ >>> @Mimam_Officialx</b>"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     
     CAPTION = """<b><a href="https://t.me/Mrn_Officialx">{file_caption}</a></b>
 <b>➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖
 👑 ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ ➥ https://t.me/Mrn_Officialx/6</b>"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     SHORTENER_API_MESSAGE = """<b>Tᴏ ᴀᴅᴅ ᴏʀ ᴜᴘᴅᴀᴛᴇ ʏᴏᴜʀ Sʜᴏʀᴛɴᴇʀ Wᴇʙsɪᴛᴇ API, /api (ᴀᴘɪ)
             
@@ -38,9 +29,6 @@ Cᴜʀʀᴇɴᴛ Sʜᴏʀᴛᴇɴᴇʀ API:</b> `{shortener_api}`
 
 If You Want To Remove Api Then Copy This And Send To Bot - `/api None`"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     ABOUT_TXT = """<b>ɪ ᴀᴍ ᴀ ᴍʀɴ ꜱᴛᴏʀᴛᴠ ꜰᴏʀ ᴛᴠ ꜱʜᴏᴡꜱ. ɪ ᴄᴀɴ ꜱᴛᴏʀᴇ ꜰɪʟᴇꜱ ᴀɴᴅ ᴏᴛʜᴇʀ ᴜꜱᴇʀꜱ ᴄᴀɴ ᴀᴄᴄᴇꜱꜱ ɪᴛ ꜰʀᴏᴍ ᴘʀᴏᴠɪᴅᴇᴅ ʟɪɴᴋ.
 
@@ -68,9 +56,6 @@ If You Want To Remove Api Then Copy This And Send To Bot - `/api None`"""
 🧑🏻‍💻 ᴅᴇᴠᴇʟᴏᴘᴇʀ: <a href=tg://user?id={}>ᴅᴇᴠᴇʟᴏᴘᴇʀ</a></b>
 """
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     HELP_TXT = """<b><u>💢 HOW TO USE THE BOT ☺️</u>
 
@@ -95,10 +80,6 @@ If You Want To Remove Api Then Copy This And Send To Bot - `/api None`"""
 
 🔻 /settings - ᴏᴘᴇɴ ᴀᴅᴍɪɴ sᴇᴛᴛɪɴɢs ᴘᴀɴᴇʟ: ꜰᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ, ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ, ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ, ᴄᴀᴘᴛɪᴏɴ, sᴛᴀʀᴛ ᴍᴇssᴀɢᴇ (ᴀᴅᴍɪɴ ᴏɴʟʏ)</b>"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-
 
     CHELP_TXT = """<b>💢 Hᴏᴡ Tᴏ Usᴇ Tʜɪs Bᴏᴛ ☺️
 
@@ -112,9 +93,6 @@ If You Want To Remove Api Then Copy This And Send To Bot - `/api None`"""
 
 🔻 /broadcast - ʀᴇᴘʟʏ ᴛᴏ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ʙʀᴏᴀᴅᴄᴀsᴛ (ʙᴏᴛ ᴏᴡɴᴇʀ ᴏɴʟʏ)</b>"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     LOG_TEXT = """<b>#NewUser
     
@@ -130,6 +108,3 @@ Nᴀᴍᴇ - {}</b>
 🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>Asia/Kolkata</code>
 🛠️ Bᴜɪʟᴅ Sᴛᴀᴛᴜs: <code>v2.7.1 [ Sᴛᴀʙʟᴇ ]</code></b>"""
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01

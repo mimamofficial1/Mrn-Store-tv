@@ -1,4 +1,8 @@
-import logging, asyncio, os, re, random, pytz, aiohttp, requests, string, json, http.client
+import logging
+import random
+import string
+import pytz
+import aiohttp
 from datetime import date, datetime
 from config import SHORTLINK_API, SHORTLINK_URL
 from shortzy import Shortzy
@@ -24,10 +28,6 @@ async def get_verify_shorted_link(link):
             logger.error(e)
             return link
     else:
-  #      response = requests.get(f"https://{SHORTLINK_URL}/api?api={SHORTLINK_API}&url={link}")
- #       data = response.json()
-  #      if data["status"] == "success" or rget.status_code == 200:
-   #         return data["shortenedUrl"]
         shortzy = Shortzy(api_key=SHORTLINK_API, base_site=SHORTLINK_URL)
         link = await shortzy.convert(link)
         return link
