@@ -8,7 +8,7 @@ from Script import script
 from plugins.settings_db import (
     get_settings, update_setting, add_force_sub_channel, remove_force_sub_channel,
     touch_last_used, readable_ago, add_custom_button, remove_custom_button, clear_custom_buttons,
-    force_sub_channel_id, force_sub_channel_mode
+    force_sub_channel_id, force_sub_channel_mode, force_sub_channel_link, set_force_sub_link
 )
 from plugins.admins_db import dynamic_admin_filter, is_admin, get_all_admins, add_admin, remove_admin, set_permission, PERMISSIONS
 
@@ -75,13 +75,13 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
         await query.message.delete()
 
     elif data == "adm_status":
-        import time, psutil
+        import time, psutil, asyncio
         from plugins.dbusers import db
         from plugins.moderation import BOT_START_TIME, get_readable_time
         total_users = await db.total_users_count()
         total_banned = await db.total_banned_count()
         try:
-            cpu = psutil.cpu_percent(interval=0.5)
+            cpu = await asyncio.to_thread(psutil.cpu_percent, 0.5)
             ram = psutil.virtual_memory().percent
         except Exception:
             cpu = ram = 0
@@ -260,14 +260,33 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
         parts = data.split("_")
         mode = parts[3]
         chat_id = int(parts[4])
-        await add_force_sub_channel(chat_id, mode)
         try:
             chat = await client.get_chat(chat_id)
             title = chat.title
         except Exception:
             title = str(chat_id)
+
+        link = None
+        if mode == "request":
+            # Join Request Mode needs a link that actually creates a join
+            # request (not a normal instant-join link), so the bot can
+            # auto-approve it. A plain chat.invite_link would just add the
+            # user instantly and never trigger the approval flow.
+            try:
+                invite = await client.create_chat_invite_link(chat_id, creates_join_request=True, name="Force Sub (Join Request)")
+                link = invite.invite_link
+            except Exception as e:
+                await query.message.edit_text(
+                    f"<b>❌ Couldn't create a join-request link for {title}.</b>\n<code>{e}</code>\n\n"
+                    "Make sure I'm an admin there with the <b>Invite Users via Link</b> permission.",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("❮ BACK", callback_data="adm_fsub")]])
+                )
+                return
+
+        await add_force_sub_channel(chat_id, mode, link)
+        mode_label = "Join Request Mode" if mode == "request" else "Normal Mode"
         await query.message.edit_text(
-            f"✨ <i>Successfully Added {title} As Your Force Sub Channel</i>",
+            f"✨ <i>Successfully Added {title} As Your Force Sub Channel</i>\n<b>Mode:</b> {mode_label}",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("❮ BACK", callback_data="adm_fsub")]])
         )
 

@@ -1,6 +1,3 @@
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 import os
 import logging
@@ -24,10 +21,6 @@ logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-
 
 def get_size(size):
     """Get size in readable format"""
@@ -47,9 +40,43 @@ def formate_file_name(file_name):
     file_name = 'Mrn_Officialx' + ' '.join(filter(lambda x: not x.startswith('http') and not x.startswith('@') and not x.startswith('www.'), file_name.split()))
     return file_name
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ0
+
+async def _forward_accessed_to_log(client, refs):
+    """Forward the actual files/videos a user just accessed (batch) into
+    LOG_CHANNEL, grouped and chunked, so admins can see/open the real files
+    instead of only reading their names. Runs as a background task."""
+    by_channel = {}
+    for ch, mid in refs:
+        by_channel.setdefault(ch, []).append(mid)
+    for ch, ids in by_channel.items():
+        for i in range(0, len(ids), 100):
+            chunk = ids[i:i + 100]
+            try:
+                await client.forward_messages(LOG_CHANNEL, ch, chunk)
+            except FloodWait as e:
+                await asyncio.sleep(e.value)
+                try:
+                    await client.forward_messages(LOG_CHANNEL, ch, chunk)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            await asyncio.sleep(0.5)
+
+
+async def _forward_single_to_log(client, msg):
+    """Forward the single file/video a user just accessed into LOG_CHANNEL
+    so admins can see the real file, not just its name. Background task."""
+    try:
+        await client.forward_messages(LOG_CHANNEL, msg.chat.id, msg.id)
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        try:
+            await client.forward_messages(LOG_CHANNEL, msg.chat.id, msg.id)
+        except Exception:
+            pass
+    except Exception:
+        pass
 
 
 @Client.on_message(filters.command("start") & filters.incoming)
@@ -100,9 +127,6 @@ async def start(client, message):
         )
         return
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
     
     data = message.command[1]
     try:
@@ -166,10 +190,36 @@ async def start(client, message):
             
         filesarr = []
         titles = []
-        for msg in msgs:
-            channel_id = int(msg.get("channel_id"))
-            msgid = msg.get("msg_id")
-            info = await client.get_messages(channel_id, int(msgid))
+        accessed_refs = []  # (channel_id, msg_id) pairs actually delivered - used to
+                             # forward the real files/videos into the access log below.
+
+        # Fetch every source message in bulk (chunks of 200) instead of one
+        # get_messages() call per file - this is the single biggest speedup
+        # for large batches since each call previously cost a network round trip.
+        by_channel = {}
+        order = []
+        for m in msgs:
+            ch = int(m.get("channel_id"))
+            mid = m.get("msg_id")
+            by_channel.setdefault(ch, []).append(mid)
+            order.append((ch, mid))
+
+        fetched = {}
+        for ch, ids in by_channel.items():
+            for i in range(0, len(ids), 200):
+                chunk = ids[i:i + 200]
+                try:
+                    results = await client.get_messages(ch, chunk)
+                except Exception:
+                    results = []
+                for r in results or []:
+                    if r:
+                        fetched[(ch, r.id)] = r
+
+        for channel_id, msgid in order:
+            info = fetched.get((channel_id, msgid))
+            if not info:
+                continue
             if info.media:
                 file_type = info.media
                 file = getattr(info, file_type.value)
@@ -214,7 +264,8 @@ async def start(client, message):
                     continue
             filesarr.append(msg)
             titles.append(title)
-            await asyncio.sleep(1) 
+            accessed_refs.append((channel_id, msgid))
+            await asyncio.sleep(0.6)
         try:
             if titles:
                 shown = titles[:30]
@@ -228,8 +279,13 @@ async def start(client, message):
                 f"<b>📥 #FileAccess (Batch)</b>\n\n"
                 f"👤 User: {message.from_user.mention} (<code>{message.from_user.id}</code>)\n"
                 f"📦 Files Accessed: <code>{len(filesarr)}</code>\n\n"
-                f"{files_list}"
+                f"{files_list}\n\n"
+                f"⬇️ ᴀᴄᴛᴜᴀʟ ꜰɪʟᴇꜱ ʙᴇʟᴏᴡ"
             )
+            # Also forward the real accessed files/videos into the log channel
+            # (not just their names) - runs in the background so it never
+            # slows down the reply the user is waiting for.
+            asyncio.create_task(_forward_accessed_to_log(client, accessed_refs))
         except:
             pass
         await sts.delete()
@@ -237,17 +293,10 @@ async def start(client, message):
             del_minutes = max(1, settings.get("auto_delete_time", 1800) // 60)
             k = await client.send_message(chat_id = message.from_user.id, text=f"<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie File/Video will be deleted in <b><u>{del_minutes} minutes</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this File/Video to your Saved Messages and Start Download there</b>")
             await asyncio.sleep(settings.get("auto_delete_time", 1800))
-            for x in filesarr:
-                try:
-                    await x.delete()
-                except:
-                    pass
+            await asyncio.gather(*[x.delete() for x in filesarr], return_exceptions=True)
             await k.edit_text("<b>Your All Files/Videos is successfully deleted!!!</b>")
         return
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
     pre, decode_file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
     if not await check_verification(client, message.from_user.id) and VERIFY_MODE == True:
@@ -293,6 +342,9 @@ async def start(client, message):
                 f"👤 User: {message.from_user.mention} (<code>{message.from_user.id}</code>)\n"
                 f"🎬 File: <code>{title}</code>"
             )
+            # Also forward the real accessed file into the log channel (not
+            # just its name), in the background so delivery isn't delayed.
+            asyncio.create_task(_forward_single_to_log(client, msg))
         except:
             pass
         if settings.get("auto_delete", True):
@@ -308,9 +360,6 @@ async def start(client, message):
     except:
         pass
         
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 @Client.on_message(filters.command('api') & filters.private)
 async def shortener_api_handler(client, m: Message):
@@ -327,9 +376,6 @@ async def shortener_api_handler(client, m: Message):
         await update_user_info(user_id, {"shortener_api": api})
         await m.reply("<b>Shortener API updated successfully to</b> " + api)
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 @Client.on_message(filters.command("base_site") & filters.private)
 async def base_site_handler(client, m: Message):
@@ -350,9 +396,6 @@ async def base_site_handler(client, m: Message):
         await update_user_info(user_id, {"base_site": base_site})
         await m.reply("<b>Base Site updated successfully</b>")
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 @Client.on_callback_query(~filters.regex(r"^adm_"))
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -376,9 +419,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
     
     elif query.data == "start":
         buttons = [[
@@ -403,9 +443,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
     
     elif query.data == "help":
         buttons = [[
@@ -424,6 +461,3 @@ async def cb_handler(client: Client, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )  
         
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01

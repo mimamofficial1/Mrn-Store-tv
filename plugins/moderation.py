@@ -4,6 +4,7 @@
 import time
 import os
 import sys
+import asyncio
 import psutil
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -69,7 +70,7 @@ async def bot_status(client, message: Message):
     total_users = await db.total_users_count()
     total_banned = await db.total_banned_count()
     try:
-        cpu = psutil.cpu_percent(interval=0.5)
+        cpu = await asyncio.to_thread(psutil.cpu_percent, 0.5)
         ram = psutil.virtual_memory().percent
     except Exception:
         cpu = ram = 0

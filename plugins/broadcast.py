@@ -1,6 +1,3 @@
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
 from plugins.dbusers import db
@@ -11,9 +8,12 @@ import asyncio
 import datetime
 import time
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
+# How many users we message at once. Telegram's flood limits are mostly
+# per-chat, so sending to many *different* users concurrently is safe and
+# turns a broadcast that used to take ages (one message at a time) into
+# something that finishes in a fraction of the time.
+CONCURRENCY = 25
+
 
 async def broadcast_messages(user_id, message):
     try:
@@ -34,63 +34,47 @@ async def broadcast_messages(user_id, message):
         # (common after a redeploy on Railway/Koyeb/Render). Deleting the user
         # here was wrongly shrinking the user count after every broadcast.
         return False, "Error"
-    except Exception as e:
+    except Exception:
         return False, "Error"
-
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
 
 
 @Client.on_message(filters.command("broadcast") & dynamic_admin_filter("can_broadcast") & filters.reply)
 async def verupikkals(bot, message):
     users = await db.get_all_users()
+    user_ids = [int(u['id']) for u in await users.to_list(length=None) if 'id' in u]
     b_msg = message.reply_to_message
     sts = await message.reply_text(text='**Broadcasting your messages...**')
     start_time = time.time()
-    total_users = await db.total_users_count()
+    total_users = len(user_ids)
     done = 0
     blocked = 0
     deleted = 0
     failed = 0
     success = 0
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
+    sem = asyncio.Semaphore(CONCURRENCY)
 
-    async for user in users:
-        if 'id' in user:
-            pti, sh = await broadcast_messages(int(user['id']), b_msg)
-            if pti:
-                success += 1
-            elif pti == False:
-                if sh == "Blocked":
-                    blocked += 1
-                elif sh == "Deleted":
-                    deleted += 1
-                elif sh == "Error":
-                    failed += 1
-            done += 1
-            if not done % 20:
-                try:
-                    await sts.edit(f"Broadcast in progress:\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nBlocked: {blocked}\nDeleted: {deleted}")
-                except:
-                    pass
+    async def _send(uid):
+        async with sem:
+            return await broadcast_messages(uid, b_msg)
+
+    tasks = [asyncio.create_task(_send(uid)) for uid in user_ids]
+    for coro in asyncio.as_completed(tasks):
+        ok, reason = await coro
+        if ok:
+            success += 1
+        elif reason == "Blocked":
+            blocked += 1
+        elif reason == "Deleted":
+            deleted += 1
         else:
-            # Handle the case where 'id' key is missing in the user dictionary
-            done += 1
             failed += 1
-            if not done % 20:
-                try:
-                    await sts.edit(f"Broadcast in progress:\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nBlocked: {blocked}\nDeleted: {deleted}")
-                except:
-                    pass
-    
+        done += 1
+        if not done % 20:
+            try:
+                await sts.edit(f"Broadcast in progress:\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nBlocked: {blocked}\nDeleted: {deleted}")
+            except:
+                pass
+
     time_taken = datetime.timedelta(seconds=int(time.time()-start_time))
     await sts.edit(f"Broadcast Completed:\nCompleted in {time_taken} seconds.\n\nTotal Users {total_users}\nCompleted: {done} / {total_users}\nSuccess: {success}\nBlocked: {blocked}\nDeleted: {deleted}")
-
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
-

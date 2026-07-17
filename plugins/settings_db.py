@@ -66,13 +66,27 @@ def readable_ago(timestamp):
     return f"{days} Days {hours} Hours"
 
 
-async def add_force_sub_channel(channel, mode="normal"):
+async def add_force_sub_channel(channel, mode="normal", link=None):
     settings = await get_settings()
     channels = settings.get("force_sub_channels") or []
     # drop any existing entry for this channel (dict or legacy plain id) before re-adding
     channels = [c for c in channels if (c.get("id") if isinstance(c, dict) else c) != channel]
-    channels.append({"id": channel, "mode": mode})
+    channels.append({"id": channel, "mode": mode, "link": link})
     await update_setting("force_sub_channels", channels)
+
+
+async def set_force_sub_link(channel, link):
+    """Cache the generated invite link (join-request or normal) for a channel
+    so we don't need to create/fetch it again on every /start."""
+    settings = await get_settings()
+    channels = settings.get("force_sub_channels") or []
+    changed = False
+    for c in channels:
+        if isinstance(c, dict) and c.get("id") == channel:
+            c["link"] = link
+            changed = True
+    if changed:
+        await update_setting("force_sub_channels", channels)
 
 
 async def remove_force_sub_channel(channel):
@@ -90,6 +104,10 @@ def force_sub_channel_id(entry):
 
 def force_sub_channel_mode(entry):
     return entry.get("mode", "normal") if isinstance(entry, dict) else "normal"
+
+
+def force_sub_channel_link(entry):
+    return entry.get("link") if isinstance(entry, dict) else None
 
 
 async def add_custom_button(text, url):
