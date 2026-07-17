@@ -83,8 +83,8 @@ async def start(client, message):
             ],[
             InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
             ],[
-            InlineKeyboardButton('👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴜs', url='https://t.me/MRN_CONTACT_BOT'),
-            InlineKeyboardButton('💝 ᴍᴏᴠɪᴇ sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
+            InlineKeyboardButton('♻️ ᴍᴏᴠɪᴇs ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
+            InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         me = client.me
@@ -188,8 +188,8 @@ async def start(client, message):
                 if f_caption is None:
                     f_caption = f"{title}"
                 button = [[
-                    InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx'),
-                    InlineKeyboardButton('ᴍᴏᴠɪᴇs sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
+                    InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                    InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
                 ]]
                 for row in (settings.get("custom_buttons") or []):
                     button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
@@ -276,8 +276,8 @@ async def start(client, message):
                 except:
                     f_caption = f"<code>{title}</code>"
             button = [[
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx'),
-                InlineKeyboardButton('ᴍᴏᴠɪᴇs sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
+                InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
             ]]
             for row in (settings.get("custom_buttons") or []):
                 button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
@@ -387,8 +387,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ],[
             InlineKeyboardButton('⚜️ sᴜʙsᴄʀɪʙᴇ ᴍʏ ᴛᴇʟᴇɢʀᴀᴍ ᴄʜᴀɴɴᴇʟ', url='https://t.me/Mrn_Officialx')
             ],[
-            InlineKeyboardButton('👨‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴜs', url='https://t.me/MRN_CONTACT_BOT'),
-            InlineKeyboardButton('💝 ᴍᴏᴠɪᴇ sᴇᴀʀᴄʜ ɢʀᴏᴜᴘ', url='https://t.me/MRN_Chat_Group')
+            InlineKeyboardButton('♻️ ᴍᴏᴠɪᴇs ʀᴇǫᴜᴇsᴛ ɢʀᴏᴜᴘ ♻️', url='https://t.me/+T5B4zp8-Wjg5MTU9'),
+            InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await client.edit_message_media(
