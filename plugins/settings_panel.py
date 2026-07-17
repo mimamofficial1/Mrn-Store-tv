@@ -92,7 +92,7 @@ async def _settings_cb_inner(client: Client, query: CallbackQuery):
             f"🚫 Ban Users - <code>{total_banned}</code>\n"
             f"⚙️ CPU - <code>{cpu}%</code>\n"
             f"💾 RAM - <code>{ram}%</code>\n"
-            f"⚡ Uptime - <code>{uptime}</code>"
+            f"⚡ Uptime - <code>{uptime}</code></b>"
         )
         await query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("« Back", callback_data="adm_menu")]]
