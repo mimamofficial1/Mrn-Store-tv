@@ -30,6 +30,7 @@ async def track_join_request(client: Client, update):
     """Record that this user sent a join request to this channel. This is
     the single source of truth for 'request' mode channels - no manual or
     auto approval needed, sending the request is enough."""
+    logger.info(f"[FSUB] join_request event: user={update.from_user.id} chat={update.chat.id}")
     settings = await get_settings()
     entries = settings.get("force_sub_channels") or []
     matched = any(
@@ -37,12 +38,14 @@ async def track_join_request(client: Client, update):
         for entry in entries
     )
     if not matched:
+        logger.info(f"[FSUB] chat={update.chat.id} is not a registered 'request' mode force-sub channel - ignoring")
         return
 
     try:
         await record_join_request(update.from_user.id, update.chat.id)
+        logger.info(f"[FSUB] recorded join request: user={update.from_user.id} chat={update.chat.id}")
     except Exception as e:
-        logger.error(f"Couldn't save join request for {update.from_user.id} in {update.chat.id}: {e}")
+        logger.error(f"[FSUB] Couldn't save join request for {update.from_user.id} in {update.chat.id}: {e}")
         return
 
     try:
@@ -50,8 +53,8 @@ async def track_join_request(client: Client, update):
             update.from_user.id,
             "✅ <b>Request received!</b> Tap /start again to continue.",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"[FSUB] Couldn't DM user {update.from_user.id} after join request: {e}")
 
 
 @Client.on_chat_member_updated()
@@ -61,10 +64,16 @@ async def handle_member_left(client: Client, update):
     have to send a fresh one (and see the Join button again) to use the
     bot again."""
     new = update.new_chat_member
+    old = update.old_chat_member
+    logger.info(
+        f"[FSUB] member_updated event: chat={update.chat.id} "
+        f"old_status={old.status if old else None} new_status={new.status if new else None}"
+    )
     if not new or new.status not in (enums.ChatMemberStatus.LEFT, enums.ChatMemberStatus.BANNED):
         return
     user = new.user or (update.old_chat_member.user if update.old_chat_member else None)
     if not user:
+        logger.info(f"[FSUB] member_updated for chat={update.chat.id} has no user info, skipping")
         return
 
     settings = await get_settings()
@@ -76,8 +85,11 @@ async def handle_member_left(client: Client, update):
     if matched:
         try:
             await clear_join_request(user.id, update.chat.id)
+            logger.info(f"[FSUB] cleared join request record: user={user.id} chat={update.chat.id} (left/banned)")
         except Exception as e:
-            logger.error(f"Couldn't clear join request for {user.id} in {update.chat.id}: {e}")
+            logger.error(f"[FSUB] Couldn't clear join request for {user.id} in {update.chat.id}: {e}")
+    else:
+        logger.info(f"[FSUB] chat={update.chat.id} is not a registered 'request' mode force-sub channel - ignoring leave")
 
 
 async def _live_pending_check(client: Client, chat_id, user_id) -> bool:
@@ -105,16 +117,20 @@ async def _channel_status(client: Client, entry, user_id: int):
         # We think they're satisfied, but double check they haven't left or
         # cancelled since (in case the leave-event was missed) before
         # trusting it blindly.
-        if await _live_pending_check(client, ch, user_id):
+        still_pending = await _live_pending_check(client, ch, user_id)
+        logger.info(f"[FSUB] user={user_id} chat={ch} has DB record, live-pending-check={still_pending}")
+        if still_pending:
             return None, None
         try:
             await clear_join_request(user_id, ch)
+            logger.info(f"[FSUB] user={user_id} chat={ch} DB record was stale - cleared")
         except Exception:
             pass
         # fall through to the normal membership check below
 
     try:
         member = await client.get_chat_member(ch, user_id)
+        logger.info(f"[FSUB] user={user_id} chat={ch} get_chat_member status={member.status}")
         if member.status not in ("kicked", "banned", "left"):
             if mode == "request":
                 # They're already an actual member (e.g. joined before this
@@ -126,9 +142,10 @@ async def _channel_status(client: Client, entry, user_id: int):
                     pass
             return None, None
     except UserNotParticipant:
-        pass
-    except Exception:
+        logger.info(f"[FSUB] user={user_id} chat={ch} -> UserNotParticipant")
+    except Exception as e:
         # Bot not admin there / invalid channel -> don't lock everyone out
+        logger.warning(f"[FSUB] user={user_id} chat={ch} get_chat_member error (not locking out): {e}")
         return None, None
 
     # Not satisfied -> build the Join button for this channel
