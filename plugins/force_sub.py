@@ -13,9 +13,9 @@
 
 import asyncio
 import logging
-from pyrogram import Client
+from pyrogram import Client, filters
 from pyrogram.errors import UserNotParticipant
-from pyrogram.types import InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from plugins.settings_db import (
     get_settings, force_sub_channel_id, force_sub_channel_mode,
     force_sub_channel_link, set_force_sub_link,
@@ -139,3 +139,42 @@ async def force_sub_join_buttons(client: Client, entries, user_id: int = None, s
 
     rows = await asyncio.gather(*[_channel_status(client, entry, user_id) for entry in entries])
     return [row for _entry, row in rows if row is not None]
+
+
+@Client.on_callback_query(filters.regex(r"^fsub_verify:"))
+async def fsub_verify_callback(client: Client, callback_query):
+    """Instant re-check when the user taps 'Try Again' - no need to reopen
+    the bot chat, this edits the same message in place with the result
+    right away (and shows a popup so it's obvious whether it worked)."""
+    user_id = callback_query.from_user.id
+    param = callback_query.data.split(":", 1)[1]
+
+    settings = await get_settings()
+    missing, buttons = await get_missing_and_buttons(client, user_id, settings)
+
+    if missing:
+        await callback_query.answer(
+            f"❌ Still {len(missing)} channel(s) pending! Join/request all of them, then try again.",
+            show_alert=True,
+        )
+        buttons = buttons + [[InlineKeyboardButton("🔄 Try Again", callback_data=f"fsub_verify:{param}")]]
+        try:
+            if callback_query.message.photo:
+                await callback_query.message.edit_caption(callback_query.message.caption.html, reply_markup=InlineKeyboardMarkup(buttons))
+            else:
+                await callback_query.message.edit_text(callback_query.message.text.html, reply_markup=InlineKeyboardMarkup(buttons))
+        except Exception:
+            pass
+        return
+
+    await callback_query.answer("✅ Verified! Tap Continue below.", show_alert=True)
+    username = client.me.username
+    open_url = f"https://t.me/{username}?start={param}" if param and param != "-" else f"https://t.me/{username}?start=true"
+    success_text = "✅ <b>Access granted!</b> Tap the button below to continue."
+    try:
+        if callback_query.message.photo:
+            await callback_query.message.edit_caption(success_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("▶️ Continue", url=open_url)]]))
+        else:
+            await callback_query.message.edit_text(success_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("▶️ Continue", url=open_url)]]))
+    except Exception:
+        pass

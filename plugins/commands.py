@@ -93,11 +93,8 @@ async def start(client, message):
     missing_channels, fsub_buttons = await get_missing_and_buttons(client, message.from_user.id, settings)
     if missing_channels:
         buttons = fsub_buttons
-        if len(message.command) == 2:
-            retry_url = f"https://t.me/{username}?start={message.command[1]}"
-        else:
-            retry_url = f"https://t.me/{username}?start=true"
-        buttons.append([InlineKeyboardButton("🔄 Try Again", url=retry_url)])
+        param = message.command[1] if len(message.command) == 2 else "-"
+        buttons.append([InlineKeyboardButton("🔄 Try Again", callback_data=f"fsub_verify:{param}")])
         fsub_text = settings.get("force_sub_message") or "<b>Please join our channel(s) to use this bot.</b>"
         fsub_photo = settings.get("force_sub_photo")
         if fsub_photo:
@@ -409,7 +406,7 @@ async def base_site_handler(client, m: Message):
         await m.reply("<b>Base Site updated successfully</b>")
 
 
-@Client.on_callback_query(~filters.regex(r"^adm_"))
+@Client.on_callback_query(filters.regex(r"^(close_data|about|start|help)$"))
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
         await query.message.delete()
