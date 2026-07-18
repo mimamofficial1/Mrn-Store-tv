@@ -13,13 +13,13 @@
 
 import asyncio
 import logging
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from pyrogram.errors import UserNotParticipant
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from plugins.settings_db import (
     get_settings, force_sub_channel_id, force_sub_channel_mode,
     force_sub_channel_link, set_force_sub_link,
-    record_join_request, has_join_request,
+    record_join_request, has_join_request, clear_join_request,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,47 @@ async def track_join_request(client: Client, update):
         pass
 
 
+@Client.on_chat_member_updated()
+async def handle_member_left(client: Client, update):
+    """If someone leaves/is removed from a 'Join Request Mode' channel after
+    having passed the force-sub check, wipe their recorded request so they
+    have to send a fresh one (and see the Join button again) to use the
+    bot again."""
+    new = update.new_chat_member
+    if not new or new.status not in (enums.ChatMemberStatus.LEFT, enums.ChatMemberStatus.BANNED):
+        return
+    user = new.user or (update.old_chat_member.user if update.old_chat_member else None)
+    if not user:
+        return
+
+    settings = await get_settings()
+    entries = settings.get("force_sub_channels") or []
+    matched = any(
+        isinstance(entry, dict) and entry.get("mode") == "request" and force_sub_channel_id(entry) == update.chat.id
+        for entry in entries
+    )
+    if matched:
+        try:
+            await clear_join_request(user.id, update.chat.id)
+        except Exception as e:
+            logger.error(f"Couldn't clear join request for {user.id} in {update.chat.id}: {e}")
+
+
+async def _live_pending_check(client: Client, chat_id, user_id) -> bool:
+    """Secondary check only - ask Telegram directly whether this user still
+    has an actively pending join request right now. Used to catch someone
+    who left/cancelled after we'd already marked them satisfied, in case
+    the leave-event (handle_member_left below) was missed."""
+    try:
+        async for _ in client.get_chat_join_requests(chat_id, user_id=user_id, limit=1):
+            return True
+        return False
+    except Exception:
+        # Can't verify -> don't punish the user for a transient API hiccup,
+        # keep trusting the DB record.
+        return True
+
+
 async def _channel_status(client: Client, entry, user_id: int):
     """Check a single force-sub channel for this user.
     Returns (missing_entry_or_None, button_row_or_None)."""
@@ -61,7 +102,16 @@ async def _channel_status(client: Client, entry, user_id: int):
     mode = force_sub_channel_mode(entry)
 
     if mode == "request" and await has_join_request(user_id, ch):
-        return None, None  # already sent a request - satisfied, no button
+        # We think they're satisfied, but double check they haven't left or
+        # cancelled since (in case the leave-event was missed) before
+        # trusting it blindly.
+        if await _live_pending_check(client, ch, user_id):
+            return None, None
+        try:
+            await clear_join_request(user_id, ch)
+        except Exception:
+            pass
+        # fall through to the normal membership check below
 
     try:
         member = await client.get_chat_member(ch, user_id)
