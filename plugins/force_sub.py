@@ -98,12 +98,16 @@ async def _live_pending_check(client: Client, chat_id, user_id) -> bool:
     who left/cancelled after we'd already marked them satisfied, in case
     the leave-event (handle_member_left below) was missed."""
     try:
+        found = False
         async for _ in client.get_chat_join_requests(chat_id, user_id=user_id, limit=1):
-            return True
-        return False
-    except Exception:
+            found = True
+            break
+        logger.info(f"[FSUB] live_pending_check user={user_id} chat={chat_id} -> found_pending={found}")
+        return found
+    except Exception as e:
         # Can't verify -> don't punish the user for a transient API hiccup,
         # keep trusting the DB record.
+        logger.warning(f"[FSUB] live_pending_check user={user_id} chat={chat_id} EXCEPTION (defaulting to True): {type(e).__name__}: {e}")
         return True
 
 
@@ -118,7 +122,6 @@ async def _channel_status(client: Client, entry, user_id: int):
         # cancelled since (in case the leave-event was missed) before
         # trusting it blindly.
         still_pending = await _live_pending_check(client, ch, user_id)
-        logger.info(f"[FSUB] user={user_id} chat={ch} has DB record, live-pending-check={still_pending}")
         if still_pending:
             return None, None
         try:
