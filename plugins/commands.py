@@ -12,7 +12,7 @@ from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
 from utils import verify_user, check_token, check_verification, get_token
 from plugins.settings_db import get_settings
-from plugins.force_sub import not_joined_channels, force_sub_join_buttons
+from plugins.force_sub import not_joined_channels, force_sub_join_buttons, get_missing_and_buttons
 from config import *
 import re
 import json
@@ -90,9 +90,9 @@ async def start(client, message):
         return await message.reply_text("<b>🚫 You are banned from using this bot.</b>")
 
     settings = await get_settings()
-    missing_channels = await not_joined_channels(client, message.from_user.id, settings)
+    missing_channels, fsub_buttons = await get_missing_and_buttons(client, message.from_user.id, settings)
     if missing_channels:
-        buttons = await force_sub_join_buttons(client, missing_channels)
+        buttons = fsub_buttons
         if len(message.command) == 2:
             retry_url = f"https://t.me/{username}?start={message.command[1]}"
         else:
