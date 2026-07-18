@@ -7,6 +7,7 @@ from config import DB_URI, DB_NAME
 _client = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
 _db = _client[DB_NAME]
 _col = _db.bot_settings
+_join_requests_col = _db.join_requests
 
 DEFAULTS = {
     "_id": "settings",
@@ -134,3 +135,29 @@ async def remove_custom_button(index):
 
 async def clear_custom_buttons():
     await update_setting("custom_buttons", [])
+
+
+# --- Join Request Mode tracking -------------------------------------------
+# For channels in "request" mode we don't wait for the admin to manually
+# approve the join request - the fact that the user tapped Join and sent a
+# request is treated as enough. Recorded here (via the reliable
+# on_chat_join_request event) as the primary signal, with a live Telegram
+# check as a fallback for when this event was somehow missed.
+
+async def record_join_request(user_id, channel_id):
+    await _join_requests_col.update_one(
+        {"user_id": int(user_id), "channel_id": int(channel_id)},
+        {"$set": {"user_id": int(user_id), "channel_id": int(channel_id)}},
+        upsert=True,
+    )
+
+
+async def has_join_request(user_id, channel_id):
+    doc = await _join_requests_col.find_one({"user_id": int(user_id), "channel_id": int(channel_id)})
+    return doc is not None
+
+
+async def clear_join_request(user_id, channel_id):
+    """Wipe the recorded join request when a user leaves/is kicked from the
+    channel, so they're required to request again next time."""
+    await _join_requests_col.delete_one({"user_id": int(user_id), "channel_id": int(channel_id)})
