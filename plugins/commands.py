@@ -264,11 +264,18 @@ async def start(client, message):
             else:
                 title = "Unknown File"
                 protect = settings.get("protect_content", False)
+                button = [[
+                    InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                    InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+                ]]
+                for row in (settings.get("custom_buttons") or []):
+                    button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
+                reply_markup = InlineKeyboardMarkup(button)
                 try:
-                    msg = await info.copy(chat_id=message.from_user.id, protect_content=protect)
+                    msg = await info.copy(chat_id=message.from_user.id, protect_content=protect, reply_markup=reply_markup)
                 except FloodWait as e:
                     await asyncio.sleep(e.value)
-                    msg = await info.copy(chat_id=message.from_user.id, protect_content=protect)
+                    msg = await info.copy(chat_id=message.from_user.id, protect_content=protect, reply_markup=reply_markup)
                 except:
                     continue
             filesarr.append(msg)
@@ -343,7 +350,14 @@ async def start(client, message):
             del_msg = await msg.copy(chat_id=message.from_user.id, caption=f_caption, reply_markup=reply_markup, protect_content=settings.get("protect_content", False))
         else:
             title = "Unknown File"
-            del_msg = await msg.copy(chat_id=message.from_user.id, protect_content=settings.get("protect_content", False))
+            button = [[
+                InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+            ]]
+            for row in (settings.get("custom_buttons") or []):
+                button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
+            reply_markup = InlineKeyboardMarkup(button)
+            del_msg = await msg.copy(chat_id=message.from_user.id, reply_markup=reply_markup, protect_content=settings.get("protect_content", False))
         try:
             await client.send_message(
                 LOG_CHANNEL,
