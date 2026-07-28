@@ -5,7 +5,12 @@ import datetime
 import motor.motor_asyncio
 from config import DB_URI, DB_NAME
 
-_client = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
+_client = motor.motor_asyncio.AsyncIOMotorClient(
+    DB_URI,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=10000,
+)
 _db = _client[DB_NAME]
 _col = _db.bot_settings
 _join_requests_col = _db.join_requests
