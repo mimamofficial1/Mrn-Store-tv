@@ -1,4 +1,3 @@
-
 import re
 from pyrogram import filters, Client, enums
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
@@ -72,34 +71,63 @@ async def gen_link_s(bot, message):
         
 
 
+_BATCH_LINK_RE = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
+
+
+def _extract_batch_ref(msg):
+    """Pull (chat_id, message_id) either from a forwarded channel post (needs
+    the 'forward tag' i.e. forwarded normally, not 'forwarded without
+    attribution') or from a t.me link the user typed/pasted."""
+    if msg.forward_from_chat and msg.forward_from_message_id:
+        return msg.forward_from_chat.id, msg.forward_from_message_id
+    text = (msg.text or "").strip()
+    if text:
+        match = _BATCH_LINK_RE.match(text)
+        if match:
+            chat_id = match.group(4)
+            msg_id = int(match.group(5))
+            if chat_id.isnumeric():
+                chat_id = int("-100" + chat_id)
+            return chat_id, msg_id
+    return None
+
+
 @Client.on_message(filters.command(['batch']) & filters.create(allowed))
 async def gen_link_batch(bot, message):
     username = (await bot.get_me()).username
-    if " " not in message.text:
-        return await message.reply("Use correct format.\nExample /batch  https://t.me/c/2363115061/14597 https://t.me/c/2363115061/14604.")
-    links = message.text.strip().split(" ")
-    if len(links) != 3:
-        return await message.reply("Use correct format.\nExample /batch  https://t.me/c/2363115061/14597 https://t.me/c/2363115061/14604.")
-    cmd, first, last = links
-    regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
-    match = regex.match(first)
-    if not match:
-        return await message.reply('Invalid link')
-    f_chat_id = match.group(4)
-    f_msg_id = int(match.group(5))
-    if f_chat_id.isnumeric():
-        f_chat_id = int(("-100" + f_chat_id))
 
-    
-    match = regex.match(last)
-    if not match:
-        return await message.reply('Invalid link')
-    l_chat_id = match.group(4)
-    l_msg_id = int(match.group(5))
-    if l_chat_id.isnumeric():
-        l_chat_id = int(("-100" + l_chat_id))
+    await message.reply(
+        "<b>Forward The Batch First Message From your Batch Channel (With Forward Tag).. "
+        "or Give Me Batch First Message link from your batch channel</b>"
+    )
+    ans1 = await bot.ask(message.chat.id, "")
+    if ans1.text and ans1.text.strip() == "/cancel":
+        return await ans1.reply("Cancelled.")
+    ref1 = _extract_batch_ref(ans1)
+    if not ref1:
+        return await ans1.reply(
+            "<b>❌ Couldn't read that. Forward the first message (with forward tag) "
+            "or send its link, then run /batch again.</b>"
+        )
+    f_chat_id, f_msg_id = ref1
 
-    if f_chat_id != l_chat_id:
+    await message.reply(
+        "<b>Forward The Batch Last Message From Your Batch Channel (With Forward Tag).. "
+        "or Give Me Batch last message link from your batch channel</b>"
+    )
+    ans2 = await bot.ask(message.chat.id, "")
+    if ans2.text and ans2.text.strip() == "/cancel":
+        return await ans2.reply("Cancelled.")
+    ref2 = _extract_batch_ref(ans2)
+    if not ref2:
+        return await ans2.reply(
+            "<b>❌ Couldn't read that. Forward the last message (with forward tag) "
+            "or send its link, then run /batch again.</b>"
+        )
+    l_chat_id, l_msg_id = ref2
+    message = ans2  # so status/reply messages below land after the last input
+
+    if str(f_chat_id) != str(l_chat_id):
         return await message.reply("Chat ids not matched.")
     try:
         chat_id = (await bot.get_chat(f_chat_id)).id
@@ -155,5 +183,3 @@ async def gen_link_batch(bot, message):
         await sts.edit(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\nContains `{og_msg}` files.\n\n🖇️ sʜᴏʀᴛ ʟɪɴᴋ :- {short_link}</b>")
     else:
         await sts.edit(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\nContains `{og_msg}` files.\n\n🔗 ᴏʀɪɢɪɴᴀʟ ʟɪɴᴋ :- {share_link}</b>")
-        
-
