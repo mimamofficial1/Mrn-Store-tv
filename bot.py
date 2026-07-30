@@ -21,6 +21,7 @@ from Script import script
 from TechVJ.bot import StreamBot
 from TechVJ.server import web_server
 from TechVJ.utils.keepalive import ping_server
+from TechVJ.utils.watchdog import run_watchdog, mark_ok
 
 
 ppath = "plugins/*.py"
@@ -34,6 +35,8 @@ async def start():
     print('Initalizing Tech VJ Bot')
     me = await StreamBot.get_me()
     StreamBot.username = me.username
+    mark_ok()
+    asyncio.create_task(run_watchdog(StreamBot))
     for name in files:
         with open(name) as a:
             patt = Path(a.name)
