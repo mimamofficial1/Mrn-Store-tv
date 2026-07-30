@@ -2,6 +2,7 @@ import time
 from aiohttp import web
 from TechVJ.bot import StreamBot
 from TechVJ import StartTime, __version__
+from TechVJ.utils.watchdog import is_bot_healthy
 
 routes = web.RouteTableDef()
 
@@ -35,7 +36,7 @@ async def root_route_handler(_):
     non-200 status when the bot is down lets Railway's healthcheck /
     restart policy actually catch and fix it automatically.
     """
-    bot_connected = bool(getattr(StreamBot, "is_connected", False))
+    bot_connected = is_bot_healthy()
     payload = {
         "server_status": "running",
         "uptime": _readable_uptime(time.time() - StartTime),
