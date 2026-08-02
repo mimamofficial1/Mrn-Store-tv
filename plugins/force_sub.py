@@ -25,6 +25,12 @@ from plugins.settings_db import (
 
 logger = logging.getLogger(__name__)
 
+# Caps how many get_chat_member calls can be in flight at once across all
+# users. Without this, a burst of many users' records going stale at the
+# same time (e.g. right after launch) fires dozens of Telegram API calls
+# simultaneously, which invites FloodWait and can starve /start responses.
+_verify_semaphore = asyncio.Semaphore(8)
+
 # If a request has sat unapproved for this long, we stop trusting it blindly
 # and re-verify against Telegram - this is what catches requests the admin
 # quietly *declined* (Telegram sends no event at all for a plain decline,
@@ -105,6 +111,25 @@ async def handle_member_left(client: Client, update):
         logger.info(f"[FSUB] chat={update.chat.id} is not a registered 'request' mode force-sub channel - ignoring leave")
 
 
+async def _reverify_stale(client: Client, user_id: int, ch):
+    """Runs in the background (never blocks a user's /start). Confirms a
+    stale join-request record is still good; clears it if the user is no
+    longer actually in the channel (e.g. was declined/removed)."""
+    try:
+        async with _verify_semaphore:
+            member = await client.get_chat_member(ch, user_id)
+        if member.status not in ("kicked", "banned", "left"):
+            await record_join_request(user_id, ch)  # confirmed real member - refresh timestamp
+        else:
+            await clear_join_request(user_id, ch)
+            logger.info(f"[FSUB] user={user_id} chat={ch} stale record expired ({member.status}) - needs fresh request")
+    except UserNotParticipant:
+        await clear_join_request(user_id, ch)
+        logger.info(f"[FSUB] user={user_id} chat={ch} stale record expired (not a member/no pending request) - needs fresh request")
+    except Exception as e:
+        logger.warning(f"[FSUB] user={user_id} chat={ch} couldn't re-verify stale record (keeping it): {e}")
+
+
 async def _channel_status(client: Client, entry, user_id: int):
     """Check a single force-sub channel for this user.
     Returns (missing_entry_or_None, button_row_or_None)."""
@@ -121,25 +146,19 @@ async def _channel_status(client: Client, entry, user_id: int):
 
             # Older than the grace period - a plain "Decline" from the admin
             # sends no event to the bot at all, so this is our only chance
-            # to catch it. Re-verify against Telegram before trusting further.
-            logger.info(f"[FSUB] user={user_id} chat={ch} DB record is {age_days}d old - re-verifying")
-            try:
-                member = await client.get_chat_member(ch, user_id)
-                if member.status not in ("kicked", "banned", "left"):
-                    await record_join_request(user_id, ch)  # confirmed real member - refresh timestamp
-                    return None, None
-                await clear_join_request(user_id, ch)
-                logger.info(f"[FSUB] user={user_id} chat={ch} stale record expired ({member.status}) - needs fresh request")
-            except UserNotParticipant:
-                await clear_join_request(user_id, ch)
-                logger.info(f"[FSUB] user={user_id} chat={ch} stale record expired (not a member/no pending request) - needs fresh request")
-            except Exception as e:
-                logger.warning(f"[FSUB] user={user_id} chat={ch} couldn't re-verify stale record (keeping it): {e}")
-                return None, None
-            # falls through to the normal membership check / button below
+            # to catch it. But we must NOT make the user's /start wait on
+            # a live Telegram call here - if many records go stale at once
+            # this used to block every /start behind a burst of API calls.
+            # So: trust the cached record for *this* reply, and re-verify
+            # in the background; a stale/declined user just gets caught
+            # on their *next* check instead of this one.
+            logger.info(f"[FSUB] user={user_id} chat={ch} DB record is {age_days}d old - re-verifying in background")
+            asyncio.create_task(_reverify_stale(client, user_id, ch))
+            return None, None
 
     try:
-        member = await client.get_chat_member(ch, user_id)
+        async with _verify_semaphore:
+            member = await client.get_chat_member(ch, user_id)
         logger.info(f"[FSUB] user={user_id} chat={ch} get_chat_member status={member.status}")
         if member.status not in ("kicked", "banned", "left"):
             if mode == "request":
