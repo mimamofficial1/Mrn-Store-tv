@@ -12,7 +12,7 @@ class StreamXBot(Client):
             bot_token=BOT_TOKEN,
             workers=50,
             plugins={"root": "plugins"},
-            sleep_threshold=60,
+            sleep_threshold=10,
         )
     async def iter_messages(
         self,
