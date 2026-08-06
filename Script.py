@@ -64,6 +64,8 @@ If You Want To Remove Api Then Copy This And Send To Bot - `/api None`"""
 🔻 /batch - sᴇɴᴅ ғɪʀsᴛ ʟɪɴᴋ ᴏғ ғɪʟᴇ sᴛᴏʀᴇ ᴄʜᴀɴɴᴇʟ ᴘᴏsᴛ ᴛʜᴇɴ ʟᴀsᴛ ᴘᴏsᴛ ʟɪɴᴋ ᴀɴᴅ ᴍᴀᴋᴇ sᴜʀᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ʏᴏᴜʀ ғɪʟᴇ sᴛᴏʀᴇ ᴄʜᴀɴɴᴇʟ.
 ᴇx - /batch https://t.me/Mrn_Officialx
 
+🔻 /special_link - sᴛᴏʀᴇ ᴍᴜʟᴛɪᴘʟᴇ ᴍᴇssᴀɢᴇs ᴏɴᴇ ʙʏ ᴏɴᴇ ᴀɴᴅ ɢᴇᴛ ᴀɴ ᴇᴅɪᴛᴀʙʟᴇ ʟɪɴᴋ (ᴀᴅᴅ ᴍᴏʀᴇ ᴍᴇssᴀɢᴇs, ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ, ᴡʜɪᴛᴇʟɪsᴛ ᴏʀ ᴀᴜᴛᴏ-ᴇxᴘɪʀᴇ ɪᴛ ʟᴀᴛᴇʀ).
+
 🔻 /base_site - ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ sᴇᴛ ᴜʀʟ sʜᴏʀᴛɴᴇʀ ʟɪɴᴋ ᴅᴏᴍᴀɪɴ 
 ᴇx - /base_site ʏᴏᴜʀᴅᴏᴍᴀɪɴ.ᴄᴏᴍ
 
