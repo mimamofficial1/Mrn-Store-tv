@@ -15,6 +15,7 @@ from plugins.settings_db import (
     append_special_link_messages,
     delete_special_link,
 )
+from plugins.commands import invalidate_special_link_cache
 
 # Per-user in-memory session for the multi-step Create/Modify/Delete flow.
 # Only one flow can be active per user at a time.
@@ -200,6 +201,7 @@ async def special_link_capture(client, message):
             await message.reply("<b>❌ Not a valid special link created by this bot.</b>")
         else:
             await delete_special_link(link_id)
+            invalidate_special_link_cache(link_id)
             await message.reply("<b>🗑 Special link deleted.</b>")
         raise StopPropagation
 
@@ -208,6 +210,7 @@ async def special_link_capture(client, message):
         link_id = session["link_id"]
         _sessions.pop(user_id, None)
         await update_special_link(link_id, {"whitelist": ids})
+        invalidate_special_link_cache(link_id)
         record = await get_special_link(link_id)
         await message.reply(
             f"<b>✅ Whitelist cleared - open to everyone again.</b>" if not ids
@@ -227,6 +230,7 @@ async def special_link_capture(client, message):
         expires_at = None if days <= 0 else datetime.datetime.utcnow() + datetime.timedelta(days=days)
         _sessions.pop(user_id, None)
         await update_special_link(link_id, {"expires_at": expires_at})
+        invalidate_special_link_cache(link_id)
         record = await get_special_link(link_id)
         await message.reply("<b>✅ Auto-expire disabled.</b>" if not expires_at else f"<b>✅ This link will expire in {days:g} day(s).</b>")
         if record:
@@ -267,6 +271,7 @@ async def special_link_action_cb(client, query):
             link_id = session["link_id"]
             if messages:
                 await append_special_link_messages(link_id, messages)
+        invalidate_special_link_cache(link_id)
         share_link = _build_share_link(username, link_id)
         _sessions.pop(user_id, None)
 
@@ -338,6 +343,7 @@ async def sl_protect_cb(client, query):
         return await query.answer("Link not found.", show_alert=True)
     new_val = not record.get("protect_content", False)
     await update_special_link(link_id, {"protect_content": new_val})
+    invalidate_special_link_cache(link_id)
     record["protect_content"] = new_val
     await query.answer(f"Protect content: {'ON' if new_val else 'OFF'}")
     try:
@@ -379,6 +385,7 @@ async def sl_delete_cb(client, query):
         return await query.answer("Not authorized.", show_alert=True)
     link_id = query.data.split(":", 1)[1]
     await delete_special_link(link_id)
+    invalidate_special_link_cache(link_id)
     await query.answer("Deleted.", show_alert=True)
     try:
         await query.message.edit_text("<b>🗑 Special link deleted.</b>")
