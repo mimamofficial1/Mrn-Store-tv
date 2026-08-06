@@ -11,12 +11,13 @@ from plugins.users_api import get_user, update_user_info
 from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
 from utils import verify_user, check_token, check_verification, get_token
-from plugins.settings_db import get_settings
+from plugins.settings_db import get_settings, get_special_link
 from plugins.force_sub import not_joined_channels, force_sub_join_buttons, get_missing_and_buttons
 from config import *
 import re
 import json
 import base64
+import datetime
 logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
@@ -183,21 +184,34 @@ async def start(client, message):
             return await message.reply_text(f"**Error - {e}**")
         sts = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**")
         file_id = data.split("-", 1)[1]
-        msgs = BATCH_FILES.get(file_id)
-        if not msgs:
-            decode_file_id = base64.urlsafe_b64decode(file_id + "=" * (-len(file_id) % 4)).decode("ascii")
-            msg = await client.get_messages(LOG_CHANNEL, int(decode_file_id))
-            media = getattr(msg, msg.media.value)
-            file_id = media.file_id
-            file = await client.download_media(file_id)
-            try: 
-                with open(file) as file_data:
-                    msgs=json.loads(file_data.read())
-            except:
-                await sts.edit("FAILED")
-                return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
-            os.remove(file)
-            BATCH_FILES[file_id] = msgs
+
+        special = await get_special_link(file_id)
+        if special:
+            expires_at = special.get("expires_at")
+            if expires_at and datetime.datetime.utcnow() > expires_at:
+                await sts.delete()
+                return await message.reply_text("<b>❌ This link has expired.</b>")
+            whitelist = special.get("whitelist") or []
+            if whitelist and message.from_user.id not in whitelist:
+                await sts.delete()
+                return await message.reply_text("<b>🚫 You are not authorized to use this link.</b>")
+            msgs = special.get("messages") or []
+        else:
+            msgs = BATCH_FILES.get(file_id)
+            if not msgs:
+                decode_file_id = base64.urlsafe_b64decode(file_id + "=" * (-len(file_id) % 4)).decode("ascii")
+                msg = await client.get_messages(LOG_CHANNEL, int(decode_file_id))
+                media = getattr(msg, msg.media.value)
+                file_id = media.file_id
+                file = await client.download_media(file_id)
+                try: 
+                    with open(file) as file_data:
+                        msgs=json.loads(file_data.read())
+                except:
+                    await sts.edit("FAILED")
+                    return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
+                os.remove(file)
+                BATCH_FILES[file_id] = msgs
             
         filesarr = []
         titles = []
@@ -256,6 +270,8 @@ async def start(client, message):
                     button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
                 reply_markup = InlineKeyboardMarkup(button)
                 protect = settings.get("protect_content", False)
+                if special and special.get("protect_content") is not None:
+                    protect = special.get("protect_content")
                 try:
                     msg = await info.copy(chat_id=message.from_user.id, caption=f_caption, protect_content=protect, reply_markup=reply_markup)
                 except FloodWait as e:
@@ -266,6 +282,8 @@ async def start(client, message):
             else:
                 title = "Unknown File"
                 protect = settings.get("protect_content", False)
+                if special and special.get("protect_content") is not None:
+                    protect = special.get("protect_content")
                 button = [[
                     InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
                     InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')

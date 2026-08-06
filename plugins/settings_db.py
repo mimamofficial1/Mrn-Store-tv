@@ -14,6 +14,7 @@ _client = motor.motor_asyncio.AsyncIOMotorClient(
 _db = _client[DB_NAME]
 _col = _db.bot_settings
 _join_requests_col = _db.join_requests
+_special_links_col = _db.special_links
 
 DEFAULTS = {
     "_id": "settings",
@@ -180,3 +181,43 @@ async def clear_all_join_requests():
     individual leave-events were missed and records have gone stale."""
     result = await _join_requests_col.delete_many({})
     return result.deleted_count
+
+
+# --- Special Links ----------------------------------------------------------
+# Like /batch, but editable after creation: messages can be added later, and
+# each link can carry its own protect-content / whitelist / expiry settings
+# that override the bot-wide defaults. The source-of-truth for what a
+# special link contains lives here in Mongo (not in the immutable Telegram
+# document /batch relies on), which is what makes "add more messages later"
+# possible.
+
+async def create_special_link(link_id, owner_id, messages):
+    doc = {
+        "_id": link_id,
+        "owner_id": owner_id,
+        "messages": messages,
+        "protect_content": None,   # None -> fall back to the global setting
+        "whitelist": [],           # empty -> open to everyone
+        "expires_at": None,        # None -> never expires
+        "created_on": datetime.datetime.utcnow(),
+    }
+    await _special_links_col.insert_one(doc)
+    return doc
+
+
+async def get_special_link(link_id):
+    if not link_id:
+        return None
+    return await _special_links_col.find_one({"_id": link_id})
+
+
+async def update_special_link(link_id, fields: dict):
+    await _special_links_col.update_one({"_id": link_id}, {"$set": fields}, upsert=True)
+
+
+async def append_special_link_messages(link_id, new_messages):
+    await _special_links_col.update_one({"_id": link_id}, {"$push": {"messages": {"$each": new_messages}}})
+
+
+async def delete_special_link(link_id):
+    await _special_links_col.delete_one({"_id": link_id})
