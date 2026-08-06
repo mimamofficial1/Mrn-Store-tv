@@ -3,6 +3,7 @@ import os
 import json
 import time
 import base64
+import asyncio
 import datetime
 from pyrogram import Client, filters, StopPropagation
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -127,7 +128,7 @@ async def special_link_menu_cb(client, query):
         return await query.message.delete()
 
     if action == "create":
-        _sessions[user_id] = {"mode": "create", "messages": [], "collecting": True}
+        _sessions[user_id] = {"mode": "create", "messages": [], "collecting": True, "lock": asyncio.Lock()}
         msg = await query.message.edit_text(_status_text(0), reply_markup=_status_buttons())
         _sessions[user_id]["status_chat_id"] = msg.chat.id
         _sessions[user_id]["status_msg_id"] = msg.id
@@ -173,14 +174,16 @@ async def special_link_capture(client, message):
         except Exception as e:
             await message.reply(f"<b>❌ Couldn't store that message:</b> {e}")
             raise StopPropagation
-        session["messages"].append({"channel_id": LOG_CHANNEL, "msg_id": post.id})
-        status_text = _status_text(len(session["messages"]))
-        try:
-            await client.edit_message_text(session["status_chat_id"], session["status_msg_id"], status_text, reply_markup=_status_buttons())
-        except Exception:
-            m = await message.reply(status_text, reply_markup=_status_buttons())
-            session["status_chat_id"] = m.chat.id
-            session["status_msg_id"] = m.id
+        lock = session.setdefault("lock", asyncio.Lock())
+        async with lock:
+            session["messages"].append({"channel_id": LOG_CHANNEL, "msg_id": post.id})
+            status_text = _status_text(len(session["messages"]))
+            try:
+                await client.edit_message_text(session["status_chat_id"], session["status_msg_id"], status_text, reply_markup=_status_buttons())
+            except Exception:
+                m = await message.reply(status_text, reply_markup=_status_buttons())
+                session["status_chat_id"] = m.chat.id
+                session["status_msg_id"] = m.id
         raise StopPropagation
 
     if mode == "await_modify_link":
@@ -310,7 +313,7 @@ async def sl_edit_cb(client, query):
     if not record:
         return await query.answer("Link not found.", show_alert=True)
     user_id = query.from_user.id
-    _sessions[user_id] = {"mode": "edit", "link_id": link_id, "messages": [], "collecting": True}
+    _sessions[user_id] = {"mode": "edit", "link_id": link_id, "messages": [], "collecting": True, "lock": asyncio.Lock()}
     msg = await query.message.edit_text(
         "<b>Send the messages you want to add to this link.</b>\n\n" + _status_text(len(record.get("messages") or [])),
         reply_markup=_status_buttons(),
