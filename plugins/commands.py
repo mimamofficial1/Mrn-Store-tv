@@ -1,4 +1,3 @@
-
 import os
 import logging
 import random
@@ -18,9 +17,34 @@ import re
 import json
 import base64
 import datetime
+import time
 logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
+
+_SPECIAL_LINK_CACHE = {}          # file_id -> (cached_at, doc_or_None)
+_SPECIAL_LINK_CACHE_TTL = 30      # seconds
+
+
+async def _get_special_link_cached(file_id):
+    """Same result as get_special_link(), but skips the Mongo round-trip
+    on repeat hits (including ordinary, non-special /batch links, which
+    always miss and would otherwise pay this query on every single open -
+    this is the hottest code path in the whole bot)."""
+    now = time.time()
+    cached = _SPECIAL_LINK_CACHE.get(file_id)
+    if cached and (now - cached[0]) < _SPECIAL_LINK_CACHE_TTL:
+        return cached[1]
+    doc = await get_special_link(file_id)
+    _SPECIAL_LINK_CACHE[file_id] = (now, doc)
+    return doc
+
+
+def invalidate_special_link_cache(link_id):
+    """Called from plugins/special_link.py whenever a link is created/edited/
+    deleted, so admins see the change immediately instead of waiting out the
+    cache TTL."""
+    _SPECIAL_LINK_CACHE.pop(link_id, None)
 
 
 def get_size(size):
@@ -185,7 +209,7 @@ async def start(client, message):
         sts = await message.reply("**🔺 ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ**")
         file_id = data.split("-", 1)[1]
 
-        special = await get_special_link(file_id)
+        special = await _get_special_link_cached(file_id)
         if special:
             expires_at = special.get("expires_at")
             if expires_at and datetime.datetime.utcnow() > expires_at:
@@ -502,5 +526,4 @@ async def cb_handler(client: Client, query: CallbackQuery):
             text=script.HELP_TXT,
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
-        )  
-        
+        )
