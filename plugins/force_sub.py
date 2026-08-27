@@ -207,6 +207,14 @@ async def not_joined_channels(client: Client, user_id: int, settings=None):
     return missing
 
 
+def _chunk_buttons(rows, per_row: int = 2):
+    """Flatten single-button rows and regroup them so 2 join buttons sit
+    side-by-side per line instead of stacking one per line - looks a lot
+    cleaner than a long single column of buttons."""
+    flat = [btn for row in rows for btn in row]
+    return [flat[i:i + per_row] for i in range(0, len(flat), per_row)]
+
+
 async def get_missing_and_buttons(client: Client, user_id: int, settings=None):
     """Single pass: returns (missing_entries, join_buttons) together, so we
     never check the same channel twice (once for the missing-list, once for
@@ -219,7 +227,7 @@ async def get_missing_and_buttons(client: Client, user_id: int, settings=None):
     results = await asyncio.gather(*[_channel_status(client, entry, user_id) for entry in entries])
     missing = [entry for entry, _row in results if entry is not None]
     buttons = [row for _entry, row in results if row is not None]
-    return missing, buttons
+    return missing, _chunk_buttons(buttons)
 
 
 async def force_sub_join_buttons(client: Client, entries, user_id: int = None, settings=None):
@@ -234,7 +242,7 @@ async def force_sub_join_buttons(client: Client, entries, user_id: int = None, s
         return [row for row in rows if row is not None]
 
     rows = await asyncio.gather(*[_channel_status(client, entry, user_id) for entry in entries])
-    return [row for _entry, row in rows if row is not None]
+    return _chunk_buttons([row for _entry, row in rows if row is not None])
 
 
 @Client.on_callback_query(filters.regex(r"^fsub_verify:"))

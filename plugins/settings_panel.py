@@ -26,16 +26,16 @@ def main_menu_text(settings):
 
 def main_menu_markup():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📝 Start Message", callback_data="adm_start")],
-        [InlineKeyboardButton("🔘 Custom Button", callback_data="adm_button")],
-        [InlineKeyboardButton("♻️ Auto Delete", callback_data="adm_autodel")],
-        [InlineKeyboardButton("👥 Admins", callback_data="adm_admins")],
-        [InlineKeyboardButton("📊 Bot Status", callback_data="adm_status")],
-        [InlineKeyboardButton("🛍 Bot Mode", callback_data="adm_mode")],
-        [InlineKeyboardButton("⏱ Restart Bot", callback_data="adm_restart")],
-        [InlineKeyboardButton("🔒 Protect Content", callback_data="adm_protect")],
-        [InlineKeyboardButton("🍿 Custom Caption", callback_data="adm_caption")],
-        [InlineKeyboardButton("📢 Custom Force Subscribe", callback_data="adm_fsub")],
+        [InlineKeyboardButton("📝 Start Message", callback_data="adm_start"),
+         InlineKeyboardButton("🔘 Custom Button", callback_data="adm_button")],
+        [InlineKeyboardButton("♻️ Auto Delete", callback_data="adm_autodel"),
+         InlineKeyboardButton("👥 Admins", callback_data="adm_admins")],
+        [InlineKeyboardButton("📊 Bot Status", callback_data="adm_status"),
+         InlineKeyboardButton("🛍 Bot Mode", callback_data="adm_mode")],
+        [InlineKeyboardButton("⏱ Restart Bot", callback_data="adm_restart"),
+         InlineKeyboardButton("🔒 Protect Content", callback_data="adm_protect")],
+        [InlineKeyboardButton("🍿 Custom Caption", callback_data="adm_caption"),
+         InlineKeyboardButton("📢 Force Subscribe", callback_data="adm_fsub")],
         [InlineKeyboardButton("✖ Close", callback_data="adm_close")],
     ])
 
