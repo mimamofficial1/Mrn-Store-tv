@@ -130,7 +130,7 @@ async def _reverify_stale(client: Client, user_id: int, ch):
         logger.warning(f"[FSUB] user={user_id} chat={ch} couldn't re-verify stale record (keeping it): {e}")
 
 
-async def _channel_status(client: Client, entry, user_id: int):
+async def _channel_status(client: Client, entry, user_id: int, index: int = 1):
     """Check a single force-sub channel for this user.
     Returns (missing_entry_or_None, button_row_or_None)."""
     ch = force_sub_channel_id(entry)
@@ -197,7 +197,9 @@ async def _channel_status(client: Client, entry, user_id: int):
     else:
         link = chat.invite_link or (f"https://t.me/{chat.username}" if chat.username else None)
 
-    row = [InlineKeyboardButton(f"🔔 Join {chat.title}", url=link)] if link else None
+    # Deliberately show a generic "Join Channel N" label instead of the
+    # real channel name/title on the button - matches the requested design.
+    row = [InlineKeyboardButton(f"🔔 ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ {index}", url=link)] if link else None
     return entry, row
 
 
@@ -224,7 +226,7 @@ async def get_missing_and_buttons(client: Client, user_id: int, settings=None):
     if not settings.get("force_sub"):
         return [], []
     entries = settings.get("force_sub_channels") or []
-    results = await asyncio.gather(*[_channel_status(client, entry, user_id) for entry in entries])
+    results = await asyncio.gather(*[_channel_status(client, entry, user_id, i) for i, entry in enumerate(entries, start=1)])
     missing = [entry for entry, _row in results if entry is not None]
     buttons = [row for _entry, row in results if row is not None]
     return missing, _chunk_buttons(buttons)
@@ -235,13 +237,13 @@ async def force_sub_join_buttons(client: Client, entries, user_id: int = None, s
     Kept for backward compatibility - prefer get_missing_and_buttons() which
     avoids re-checking each channel a second time."""
     if user_id is None:
-        async def _build_only(entry):
-            _entry, row = await _channel_status(client, entry, 0)
+        async def _build_only(entry, i):
+            _entry, row = await _channel_status(client, entry, 0, i)
             return row
-        rows = await asyncio.gather(*[_build_only(entry) for entry in entries])
+        rows = await asyncio.gather(*[_build_only(entry, i) for i, entry in enumerate(entries, start=1)])
         return [row for row in rows if row is not None]
 
-    rows = await asyncio.gather(*[_channel_status(client, entry, user_id) for entry in entries])
+    rows = await asyncio.gather(*[_channel_status(client, entry, user_id, i) for i, entry in enumerate(entries, start=1)])
     return _chunk_buttons([row for _entry, row in rows if row is not None])
 
 
@@ -261,7 +263,7 @@ async def fsub_verify_callback(client: Client, callback_query):
             f"❌ Still {len(missing)} channel(s) pending! Join/request all of them, then try again.",
             show_alert=True,
         )
-        buttons = buttons + [[InlineKeyboardButton("🔄 Try Again", callback_data=f"fsub_verify:{param}")]]
+        buttons = buttons + [[InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data=f"fsub_verify:{param}")]]
         try:
             if callback_query.message.photo:
                 await callback_query.message.edit_caption(callback_query.message.caption.html, reply_markup=InlineKeyboardMarkup(buttons))

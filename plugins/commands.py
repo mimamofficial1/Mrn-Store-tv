@@ -96,7 +96,7 @@ async def start(client, message):
     if missing_channels:
         buttons = fsub_buttons
         param = message.command[1] if len(message.command) == 2 else "-"
-        buttons.append([InlineKeyboardButton("🔄 Try Again", callback_data=f"fsub_verify:{param}")])
+        buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data=f"fsub_verify:{param}")])
         fsub_text = settings.get("force_sub_message") or "<b>Please join our channel(s) to use this bot.</b>"
         fsub_photo = settings.get("force_sub_photo")
         if fsub_photo:
@@ -131,11 +131,20 @@ async def start(client, message):
             start_caption = start_caption.format(message.from_user.mention, me.mention)
         except (IndexError, KeyError):
             pass
-        await message.reply_photo(
-            photo=random.choice(PICS),
-            caption=start_caption,
-            reply_markup=reply_markup
-        )
+        start_photo = settings.get("start_photo") or random.choice(PICS)
+        try:
+            await message.reply_photo(
+                photo=start_photo,
+                caption=start_caption,
+                reply_markup=reply_markup
+            )
+        except Exception:
+            # bad/expired custom file_id -> fall back to a default random pic
+            await message.reply_photo(
+                photo=random.choice(PICS),
+                caption=start_caption,
+                reply_markup=reply_markup
+            )
         return
 
     

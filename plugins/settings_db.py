@@ -33,6 +33,7 @@ DEFAULTS = {
     "auto_delete_time": 1800,          # seconds
     "custom_caption": None,            # None -> fall back to config.CUSTOM_FILE_CAPTION
     "start_message": None,             # None -> fall back to Script.script.START_TXT
+    "start_photo": None,                # file_id of a custom /start photo (None = random pic from config.PICS)
     "custom_buttons": [],              # list of rows -> [[{"text":..,"url":..}, ...], ...]
     "public_mode": None,               # None -> fall back to config.PUBLIC_FILE_STORE; True/False overrides it
     "last_used": None,                 # unix timestamp, updated whenever /settings is opened
