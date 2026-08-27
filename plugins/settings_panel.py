@@ -16,8 +16,11 @@ from plugins.admins_db import dynamic_admin_filter, is_admin, get_all_admins, ad
 def main_menu_text(settings):
     last_used = readable_ago(settings.get("last_used"))
     return (
-        "🍿 <b>You can customise more features in your MRN bot from here.</b>\n\n"
-        f"⏰ <b>Last Used</b> - {last_used} ago"
+        "⚙️ <b>ᴍʀɴ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ ᴘᴀɴᴇʟ</b>\n"
+        "➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+        "🍿 <i>Customise every feature of your MRN bot right from here.</i>\n\n"
+        f"⏰ <b>Last Used :</b> {last_used} ago\n\n"
+        "👇 <b>Choose an option below</b>"
     )
 
 

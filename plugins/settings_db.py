@@ -19,7 +19,14 @@ DEFAULTS = {
     "_id": "settings",
     "force_sub": False,
     "force_sub_channels": [],          # list of channel ids or @usernames
-    "force_sub_message": "<b>👋 Please join our channel(s) below to use this bot, then tap 🔄 Try Again.</b>",
+    "force_sub_message": (
+        "🔴 <b>ᴘʟᴇᴀꜱᴇ ᴊᴏɪɴ ᴍʏ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ʙᴏᴛ!</b> 🔴\n"
+        "➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+        "🎬 <b>ʟᴀᴛᴇꜱᴛ ᴍᴏᴠɪᴇꜱ | ᴛᴠ ꜱʜᴏᴡꜱ | ᴡᴇʙ ꜱᴇʀɪᴇꜱ ᴘᴀᴀɴᴇ ᴋᴇ ʟɪʏᴇ</b>\n"
+        "👉 <i>Please join all our upcoming channels first.</i>\n\n"
+        "⚠️ <b>Channels join karne ke baad hi aap bot use kar sakte hain.</b>\n"
+        "🔄 <i>Join karne ke baad \"Try Again\" par click karein aur episode mil jayenge.</i> ✅"
+    ),
     "force_sub_photo": None,           # file_id of a photo to show with the force-sub prompt (None = text only)
     "protect_content": False,
     "auto_delete": True,
