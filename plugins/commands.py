@@ -1,4 +1,3 @@
-
 import os
 import logging
 import random
@@ -348,7 +347,7 @@ async def start(client, message):
             single_caption = settings.get("custom_caption") or CUSTOM_FILE_CAPTION
             if single_caption:
                 try:
-                    f_caption=single_caption.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='')
+                    f_caption=single_caption.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if title is None else title)
                 except:
                     f_caption = f"<code>{title}</code>"
             button = [[
@@ -391,8 +390,22 @@ async def start(client, message):
                 pass
             await k.edit_text("<b>Your File/Video is successfully deleted!!!</b>")
         return
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Failed to deliver file for decode_file_id={decode_file_id}: {e}")
+        try:
+            await client.send_message(
+                LOG_CHANNEL,
+                f"<b>⚠️ #FileDeliveryFailed</b>\n\n"
+                f"👤 User: {message.from_user.mention} (<code>{message.from_user.id}</code>)\n"
+                f"🆔 Message ID tried: <code>{decode_file_id}</code>\n"
+                f"❌ Error: <code>{e}</code>"
+            )
+        except:
+            pass
+        await message.reply_text(
+            "<b>❌ This file could not be found or delivered. It may have been removed, or the link is broken. "
+            "Please ask the admin to generate a new link.</b>"
+        )
         
 
 @Client.on_message(filters.command('api') & filters.private)
@@ -493,5 +506,4 @@ async def cb_handler(client: Client, query: CallbackQuery):
             text=script.HELP_TXT,
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
-        )  
-        
+        )
