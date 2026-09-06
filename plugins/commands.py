@@ -339,9 +339,12 @@ async def start(client, message):
         return
     try:
         msg = await client.get_messages(LOG_CHANNEL, int(decode_file_id))
-        if msg.media:
+        real_file_types = ("document", "video", "audio", "photo", "animation", "voice", "video_note")
+        if msg.media and msg.media.value in real_file_types:
             media = getattr(msg, msg.media.value)
-            title = formate_file_name(media.file_name)
+            orig_caption = getattr(msg, 'caption', None)
+            orig_caption = orig_caption.html if orig_caption else None
+            title = orig_caption or formate_file_name(getattr(media, "file_name", ""))
             size=get_size(media.file_size)
             f_caption = f"<code>{title}</code>"
             single_caption = settings.get("custom_caption") or CUSTOM_FILE_CAPTION
