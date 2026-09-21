@@ -1,10 +1,6 @@
-import sys
-import glob
 import asyncio
-import importlib
 import logging
 import logging.config
-from pathlib import Path
 from datetime import date, datetime
 
 import pytz
@@ -24,8 +20,6 @@ from TechVJ.utils.keepalive import ping_server
 from TechVJ.utils.watchdog import run_watchdog, mark_ok
 
 
-ppath = "plugins/*.py"
-files = glob.glob(ppath)
 StreamBot.start()
 loop = asyncio.get_event_loop()
 
@@ -37,17 +31,9 @@ async def start():
     StreamBot.username = me.username
     mark_ok()
     asyncio.create_task(run_watchdog(StreamBot))
-    for name in files:
-        with open(name) as a:
-            patt = Path(a.name)
-            plugin_name = patt.stem.replace(".py", "")
-            plugins_dir = Path(f"plugins/{plugin_name}.py")
-            import_path = "plugins.{}".format(plugin_name)
-            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-            load = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(load)
-            sys.modules["plugins." + plugin_name] = load
-            print("Tech VJ Imported => " + plugin_name)
+    # NOTE: plugins are already loaded by Pyrogram itself (plugins={"root": "plugins"}
+    # in TechVJ/bot/__init__.py) when StreamBot.start() runs above. The old manual
+    # importlib loop re-executed every plugin a second time (duplicate Mongo clients).
     if ON_HEROKU:
         asyncio.create_task(ping_server())
     tz = pytz.timezone('Asia/Kolkata')
