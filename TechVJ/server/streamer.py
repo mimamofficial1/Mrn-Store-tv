@@ -327,13 +327,13 @@ _WATCH_PAGE = """<!DOCTYPE html>
     </div>
     <div class="actions">
       <a class="btn primary" href="{download_url}">🚀 Fast Download</a>
-      <a class="btn" href="{stream_url}" target="_blank" rel="noopener">🔗 Direct Stream Link</a>
+      <a class="btn" href="{download_url}" target="_blank" rel="noopener">🔗 Direct Stream Link</a>
     </div>
     <div class="players">
       Open externally:
-      <a href="intent:{stream_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;end">MX Player</a>
-      <a href="intent:{stream_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end">VLC</a>
-      <a href="playit://playerv2/video?url={stream_url}">PLAYit</a>
+      <a href="intent:{download_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;end">MX Player</a>
+      <a href="intent:{download_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end">VLC</a>
+      <a href="playit://playerv2/video?url={download_url}">PLAYit</a>
     </div>
   </div>
 </body>
@@ -347,17 +347,17 @@ async def render_watch_page(chat_id: int, message_id: int, secure_hash: str) -> 
     if file_id.unique_id[:6] != secure_hash:
         raise InvalidStreamHash
 
-    download_url, stream_url = build_stream_urls(chat_id, message_id, file_id.unique_id, file_id.file_name)
+    download_url, watch_url = build_stream_urls(chat_id, message_id, file_id.unique_id, file_id.file_name)
     mime_type = file_id.mime_type or ""
     file_name = (file_id.file_name or "file").replace("_", " ")
     file_size = humanbytes(file_id.file_size)
 
     if mime_type.startswith("audio"):
-        media_tag = f'<audio controls preload="metadata" src="{stream_url}"></audio>'
+        media_tag = f'<audio controls preload="metadata" src="{download_url}"></audio>'
     else:
-        media_tag = f'<video controls playsinline preload="metadata" src="{stream_url}"></video>'
+        media_tag = f'<video controls playsinline preload="metadata" src="{download_url}"></video>'
 
     return _WATCH_PAGE.format(
         file_name=file_name, file_size=file_size, media_tag=media_tag,
-        download_url=download_url, stream_url=stream_url,
+        download_url=download_url,
     )
