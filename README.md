@@ -21,6 +21,7 @@
 - [x] Force Subscribe (Normal Mode + Join Request Mode)
 - [x] Admin Settings Panel (`/settings`) + Dynamic Admins With Permissions
 - [x] Ban / Unban Users, Bot Status, Fast Broadcast
+- [x] Fast Download / Watch Online (built-in streaming, no third-party bin channel required)
 </b>
 </details>
 
@@ -41,9 +42,10 @@
 - `VERIFY_MODE` : `True` Or `False` (Token Verification)
 - `WEBSITE_URL_MODE` : `True` Or `False` (Permanent Link By Website)
 - `WEBSITE_URL` : Your Redirect Website Url [Only If WEBSITE_URL_MODE Is True]
+- `STREAM_MODE` : `True` Or `False` (Fast Download / Watch Online buttons on delivered files)
 - `ADMINS` : It mean Admin/Owner Id For Broadcasting Message.
 - `LOG_CHANNEL` : Log channel id start with -100xxxxxx
-- `URL` : Your Server App Link With https:// and in last make sure one / is given.
+- `URL` : Your Server App Link With https:// and in last make sure one / is given. [Also Used For Fast Download / Watch Online Links]
 - `AUTO_DELETE` : Time In Minutes
 - `AUTO_DELETE_TIME` : Time In Seconds
 - `PYTHON_VERSION` : This Variable Is Only For Render, Value IS `3.10.8`
@@ -101,4 +103,3 @@ Copyright ©️ [Mrn_Officialx](https://telegram.me/Mrn_Officialx)
 ### Copyright ©️ [Mrn_Officialx](https://telegram.me/Mrn_Officialx)
 
 <b>Selling This Repo Or Code Of This Repo For Money Is Strictly Prohibited 🚫</b>
-
