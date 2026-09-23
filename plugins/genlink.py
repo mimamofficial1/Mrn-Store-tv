@@ -5,6 +5,7 @@ from config import ADMINS, LOG_CHANNEL, PUBLIC_FILE_STORE, WEBSITE_URL, WEBSITE_
 from plugins.users_api import get_user, get_short_link
 from plugins.settings_db import get_settings
 from plugins.admins_db import is_admin
+from plugins.dbusers import db
 import re
 import os
 import json
@@ -12,6 +13,9 @@ import base64
 
 
 async def allowed(_, __, message):
+    # banned users must not be able to generate links / use /batch either
+    if message.from_user and await db.is_user_banned(message.from_user.id):
+        return False
     settings = await get_settings()
     public_mode = settings.get("public_mode")
     if public_mode is None:
