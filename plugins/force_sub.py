@@ -118,7 +118,7 @@ async def _reverify_stale(client: Client, user_id: int, ch):
     try:
         async with _verify_semaphore:
             member = await client.get_chat_member(ch, user_id)
-        if member.status not in ("kicked", "banned", "left"):
+        if member.status not in (enums.ChatMemberStatus.BANNED, enums.ChatMemberStatus.LEFT):
             await record_join_request(user_id, ch)  # confirmed real member - refresh timestamp
         else:
             await clear_join_request(user_id, ch)
@@ -160,7 +160,7 @@ async def _channel_status(client: Client, entry, user_id: int, index: int = 1):
         async with _verify_semaphore:
             member = await client.get_chat_member(ch, user_id)
         logger.info(f"[FSUB] user={user_id} chat={ch} get_chat_member status={member.status}")
-        if member.status not in ("kicked", "banned", "left"):
+        if member.status not in (enums.ChatMemberStatus.BANNED, enums.ChatMemberStatus.LEFT):
             if mode == "request":
                 # They're already an actual member (e.g. joined before this
                 # channel was even set to request mode) - record it so we
