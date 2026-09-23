@@ -12,6 +12,7 @@ from pyrogram.types import *
 from utils import verify_user, check_token, check_verification, get_token
 from plugins.settings_db import get_settings
 from plugins.force_sub import not_joined_channels, force_sub_join_buttons, get_missing_and_buttons
+from TechVJ.server.streamer import build_stream_urls
 from config import *
 import re
 import json
@@ -40,6 +41,27 @@ def formate_file_name(file_name):
         file_name = file_name.replace(c, "")  # was discarding the result before - a no-op bug
     file_name = ' '.join(filter(lambda x: not x.startswith('http') and not x.startswith('@') and not x.startswith('www.'), file_name.split()))
     return file_name
+
+
+def stream_download_buttons(chat_id, message_id, media):
+    """Fast Download / Watch Online button row for a delivered file.
+    Built from data already in hand (no extra Telegram API call). Returns
+    [] if STREAM_MODE is off or the media has no usable file info."""
+    if not STREAM_MODE:
+        return []
+    try:
+        download_url, watch_url = build_stream_urls(
+            chat_id, message_id,
+            getattr(media, "file_unique_id", ""),
+            getattr(media, "file_name", "") or "file",
+        )
+        return [[
+            InlineKeyboardButton('🚀 ꜰᴀꜱᴛ ᴅᴏᴡɴʟᴏᴀᴅ 🚀', url=download_url),
+            InlineKeyboardButton('🖥 ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ 🖥', url=watch_url),
+        ]]
+    except Exception:
+        logger.error("Failed to build stream/download buttons", exc_info=True)
+        return []
 
 
 async def _forward_accessed_to_log(client, refs):
@@ -302,6 +324,7 @@ async def start(client, message):
                 ]]
                 for row in (settings.get("custom_buttons") or []):
                     button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
+                button.extend(stream_download_buttons(channel_id, msgid, file))
                 reply_markup = InlineKeyboardMarkup(button)
                 protect = settings.get("protect_content", False)
                 try:
@@ -397,6 +420,7 @@ async def start(client, message):
             ]]
             for row in (settings.get("custom_buttons") or []):
                 button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
+            button.extend(stream_download_buttons(msg.chat.id, msg.id, media))
             reply_markup = InlineKeyboardMarkup(button)
             del_msg = await msg.copy(chat_id=message.from_user.id, caption=f_caption, reply_markup=reply_markup, protect_content=settings.get("protect_content", False))
         else:
