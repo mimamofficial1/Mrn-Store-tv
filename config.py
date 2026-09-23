@@ -1,5 +1,3 @@
-
-
 import re
 import os
 from os import environ
@@ -59,10 +57,13 @@ WEBSITE_URL_MODE = is_enabled(environ.get('WEBSITE_URL_MODE', "True"), True) # S
 # If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
 WEBSITE_URL = environ.get("WEBSITE_URL", "https://mrn-universe-store-tv.blogspot.com/2026/07/redirecting-to-your-link-document.html")
 
+# Fast Download / Watch Online Info:
+STREAM_MODE = is_enabled(environ.get('STREAM_MODE', "True"), True) # Set True or False
+# Uses the URL variable below as the public base URL for stream/download links.
+
 PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 minutes
 if 'DYNO' in environ:
     ON_HEROKU = True
 else:
     ON_HEROKU = False
 URL = environ.get("URL", "https://mrn-universe-store-tv.koyeb.app/")
-
