@@ -80,6 +80,42 @@ async def _forward_single_to_log(client, msg):
         pass
 
 
+# Keep references to background tasks so they can't be garbage-collected mid-run.
+_BG_TASKS = set()
+
+
+def _spawn(coro):
+    task = asyncio.create_task(coro)
+    _BG_TASKS.add(task)
+    task.add_done_callback(_BG_TASKS.discard)
+    return task
+
+
+async def _delete_batch_later(delay, filesarr, notice):
+    """Auto-delete a delivered batch after `delay` seconds. Runs as a background
+    task so the /start handler (and its Pyrogram worker) is freed immediately
+    instead of sleeping for the whole auto-delete time."""
+    await asyncio.sleep(delay)
+    await asyncio.gather(*[x.delete() for x in filesarr], return_exceptions=True)
+    try:
+        await notice.edit_text("<b>Your All Files/Videos is successfully deleted!!!</b>")
+    except Exception:
+        pass
+
+
+async def _delete_single_later(delay, del_msg, notice):
+    """Same as above, for a single delivered file."""
+    await asyncio.sleep(delay)
+    try:
+        await del_msg.delete()
+    except Exception:
+        pass
+    try:
+        await notice.edit_text("<b>Your File/Video is successfully deleted!!!</b>")
+    except Exception:
+        pass
+
+
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     username = client.me.username
@@ -168,6 +204,7 @@ async def start(client, message):
                 protect_content=True
             )
             await verify_user(client, userid, token)
+            return
         else:
             return await message.reply_text(
                 text="<b>Invalid link or Expired link !</b>",
@@ -196,12 +233,15 @@ async def start(client, message):
             decode_file_id = base64.urlsafe_b64decode(file_id + "=" * (-len(file_id) % 4)).decode("ascii")
             msg = await client.get_messages(LOG_CHANNEL, int(decode_file_id))
             media = getattr(msg, msg.media.value)
-            file_id = media.file_id
-            file = await client.download_media(file_id)
+            file = await client.download_media(media.file_id)  # keep file_id intact - it is the BATCH_FILES cache key
             try: 
                 with open(file) as file_data:
                     msgs=json.loads(file_data.read())
             except:
+                try:
+                    os.remove(file)
+                except Exception:
+                    pass
                 await sts.edit("FAILED")
                 return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
             os.remove(file)
@@ -318,9 +358,7 @@ async def start(client, message):
         if settings.get("auto_delete", True):
             del_minutes = max(1, settings.get("auto_delete_time", 1800) // 60)
             k = await client.send_message(chat_id = message.from_user.id, text=f"<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie File/Video will be deleted in <b><u>{del_minutes} minutes</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this File/Video to your Saved Messages and Start Download there</b>")
-            await asyncio.sleep(settings.get("auto_delete_time", 1800))
-            await asyncio.gather(*[x.delete() for x in filesarr], return_exceptions=True)
-            await k.edit_text("<b>Your All Files/Videos is successfully deleted!!!</b>")
+            _spawn(_delete_batch_later(settings.get("auto_delete_time", 1800), filesarr, k))
         return
 
 
@@ -386,12 +424,7 @@ async def start(client, message):
         if settings.get("auto_delete", True):
             del_minutes = max(1, settings.get("auto_delete_time", 1800) // 60)
             k = await client.send_message(chat_id = message.from_user.id, text=f"<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie File/Video will be deleted in <b><u>{del_minutes} minutes</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this File/Video to your Saved Messages and Start Download there</b>")
-            await asyncio.sleep(settings.get("auto_delete_time", 1800))
-            try:
-                await del_msg.delete()
-            except:
-                pass
-            await k.edit_text("<b>Your File/Video is successfully deleted!!!</b>")
+            _spawn(_delete_single_later(settings.get("auto_delete_time", 1800), del_msg, k))
         return
     except Exception as e:
         logger.error(f"Failed to deliver file for decode_file_id={decode_file_id}: {e}")
@@ -423,6 +456,10 @@ async def shortener_api_handler(client, m: Message):
 
     elif len(cmd) == 2:    
         api = cmd[1].strip()
+        if api.lower() == "none":
+            # "/api None" removes the saved API (it used to be stored as the literal string "None")
+            await update_user_info(user_id, {"shortener_api": None})
+            return await m.reply("<b>Shortener API removed successfully</b>")
         await update_user_info(user_id, {"shortener_api": api})
         await m.reply("<b>Shortener API updated successfully to</b> " + api)
 
@@ -437,9 +474,10 @@ async def base_site_handler(client, m: Message):
         return await m.reply(text=text, disable_web_page_preview=True)
     elif len(cmd) == 2:
         base_site = cmd[1].strip()
-        if base_site == None:
-            await update_user_info(user_id, {"base_site": base_site})
-            return await m.reply("<b>Base Site updated successfully</b>")
+        if base_site.lower() == "none":
+            # "/base_site None" removes the saved base site (the old `== None` check never matched a string)
+            await update_user_info(user_id, {"base_site": None})
+            return await m.reply("<b>Base Site removed successfully</b>")
             
         if not domain(base_site):
             return await m.reply(text=text, disable_web_page_preview=True)
