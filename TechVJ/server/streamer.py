@@ -80,14 +80,27 @@ def get_hash(media) -> str:
     return (getattr(media, "file_unique_id", "") or "")[:6]
 
 
-def build_stream_urls(chat_id: int, message_id: int, file_unique_id: str, file_name: str) -> Tuple[str, str]:
-    """Build (download_url, watch_url) for a file already sitting at
-    (chat_id, message_id) - no network call, pure string building."""
+def _dl_url(chat_id: int, message_id: int, file_unique_id: str, file_name: str, force_download: bool) -> str:
     token = encode_stream_token(chat_id, message_id)
     secure_hash = (file_unique_id or "")[:6]
     safe_name = urllib.parse.quote(file_name or "file")
     base = URL if URL.endswith("/") else URL + "/"
-    download_url = f"{base}dl/{token}/{safe_name}?hash={secure_hash}"
+    query = f"hash={secure_hash}"
+    if force_download:
+        query += "&dl=1"  # tells stream_media() to send Content-Disposition: attachment
+    return f"{base}dl/{token}/{safe_name}?{query}"
+
+
+def build_stream_urls(chat_id: int, message_id: int, file_unique_id: str, file_name: str) -> Tuple[str, str]:
+    """Build (download_url, watch_url) for a file already sitting at
+    (chat_id, message_id) - no network call, pure string building.
+    download_url forces an actual download (dl=1); watch_url opens the
+    HTML player page, whose <video>/<audio> src is a separate, inline
+    (non-forced) link so it plays instead of downloading."""
+    download_url = _dl_url(chat_id, message_id, file_unique_id, file_name, force_download=True)
+    token = encode_stream_token(chat_id, message_id)
+    secure_hash = (file_unique_id or "")[:6]
+    base = URL if URL.endswith("/") else URL + "/"
     watch_url = f"{base}watch/{token}?hash={secure_hash}"
     return download_url, watch_url
 
@@ -255,6 +268,7 @@ async def stream_media(request: web.Request, chat_id: int, message_id: int, secu
 
     mime_type = file_id.mime_type or (mimetypes.guess_type(file_id.file_name or "")[0]) or "application/octet-stream"
     file_name = file_id.file_name or "file"
+    disposition = "attachment" if request.rel_url.query.get("dl") == "1" else "inline"
 
     return web.Response(
         status=206 if range_header else 200,
@@ -263,7 +277,7 @@ async def stream_media(request: web.Request, chat_id: int, message_id: int, secu
             "Content-Type": mime_type,
             "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
             "Content-Length": str(req_length),
-            "Content-Disposition": f'inline; filename="{file_name}"',
+            "Content-Disposition": f'{disposition}; filename="{file_name}"',
             "Accept-Ranges": "bytes",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
@@ -327,13 +341,13 @@ _WATCH_PAGE = """<!DOCTYPE html>
     </div>
     <div class="actions">
       <a class="btn primary" href="{download_url}">🚀 Fast Download</a>
-      <a class="btn" href="{download_url}" target="_blank" rel="noopener">🔗 Direct Stream Link</a>
+      <a class="btn" href="{inline_url}" target="_blank" rel="noopener">🔗 Direct Stream Link</a>
     </div>
     <div class="players">
       Open externally:
-      <a href="intent:{download_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;end">MX Player</a>
-      <a href="intent:{download_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end">VLC</a>
-      <a href="playit://playerv2/video?url={download_url}">PLAYit</a>
+      <a href="intent:{inline_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;end">MX Player</a>
+      <a href="intent:{inline_url}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end">VLC</a>
+      <a href="playit://playerv2/video?url={inline_url}">PLAYit</a>
     </div>
   </div>
 </body>
@@ -348,16 +362,17 @@ async def render_watch_page(chat_id: int, message_id: int, secure_hash: str) -> 
         raise InvalidStreamHash
 
     download_url, watch_url = build_stream_urls(chat_id, message_id, file_id.unique_id, file_id.file_name)
+    inline_url = _dl_url(chat_id, message_id, file_id.unique_id, file_id.file_name, force_download=False)
     mime_type = file_id.mime_type or ""
     file_name = (file_id.file_name or "file").replace("_", " ")
     file_size = humanbytes(file_id.file_size)
 
     if mime_type.startswith("audio"):
-        media_tag = f'<audio controls preload="metadata" src="{download_url}"></audio>'
+        media_tag = f'<audio controls preload="metadata" src="{inline_url}"></audio>'
     else:
-        media_tag = f'<video controls playsinline preload="metadata" src="{download_url}"></video>'
+        media_tag = f'<video controls playsinline preload="metadata" src="{inline_url}"></video>'
 
     return _WATCH_PAGE.format(
         file_name=file_name, file_size=file_size, media_tag=media_tag,
-        download_url=download_url,
+        download_url=download_url, inline_url=inline_url,
     )
