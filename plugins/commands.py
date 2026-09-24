@@ -319,8 +319,8 @@ async def start(client, message):
                 if f_caption is None:
                     f_caption = f"{title}"
                 button = [[
-                    InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
-                    InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+                    InlineKeyboardButton('🌺 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                    InlineKeyboardButton('💎 ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs 💎', url='https://t.me/MRN_Officialx/6')
                 ]]
                 for row in (settings.get("custom_buttons") or []):
                     button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
@@ -338,8 +338,8 @@ async def start(client, message):
                 title = "Unknown File"
                 protect = settings.get("protect_content", False)
                 button = [[
-                    InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
-                    InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+                    InlineKeyboardButton('🌺 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                    InlineKeyboardButton('💎 ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs 💎', url='https://t.me/MRN_Officialx/6')
                 ]]
                 for row in (settings.get("custom_buttons") or []):
                     button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
@@ -415,8 +415,8 @@ async def start(client, message):
                 except:
                     f_caption = f"<code>{title}</code>"
             button = [[
-                InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
-                InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+                InlineKeyboardButton('🌺 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                InlineKeyboardButton('💎 ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs 💎', url='https://t.me/MRN_Officialx/6')
             ]]
             for row in (settings.get("custom_buttons") or []):
                 button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
@@ -426,8 +426,8 @@ async def start(client, message):
         else:
             title = "Unknown File"
             button = [[
-                InlineKeyboardButton('🌺 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
-                InlineKeyboardButton('🥰 ʀᴇᴀʟɪᴛʏ ᴛᴠ sʜᴏᴡs 🥰', url='https://t.me/+MdUPwSnwvP0zN2U1')
+                InlineKeyboardButton('🌺 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ 🌺', url='https://t.me/+PArBpI-yLp5hMjQ1'),
+                InlineKeyboardButton('💎 ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs 💎', url='https://t.me/MRN_Officialx/6')
             ]]
             for row in (settings.get("custom_buttons") or []):
                 button.append([InlineKeyboardButton(b["text"], url=b["url"]) for b in row])
